@@ -15,7 +15,7 @@ interface UseSubscriptionReturn {
   checkFeature: (feature: string) => Promise<{ hasAccess: boolean; reason?: string; upgrade?: any }>;
   
   // Usage limits
-  checkLimit: (limitType: string, amount?: number) => Promise<{ allowed: boolean; remaining: number; reason?: string }>;
+  checkLimit: (limitType: string, amount?: number) => Promise<{ allowed: boolean; remaining: number; reason?: string; resetDate?: string }>;
   incrementUsage: (limitType: string, amount?: number) => Promise<{ success: boolean; remaining: number }>;
   
   // Subscription management

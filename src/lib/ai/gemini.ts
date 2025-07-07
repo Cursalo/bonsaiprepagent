@@ -60,6 +60,7 @@ export class GeminiService {
         messageParts = [
           { text: lastMessage.content },
           ...lastMessage.images.map(image => ({
+            text: '',
             inlineData: {
               mimeType: 'image/jpeg',
               data: image,
