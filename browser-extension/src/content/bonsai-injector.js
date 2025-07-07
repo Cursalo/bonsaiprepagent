@@ -63,18 +63,53 @@
     }
 
     async function loadBonsaiAssets() {
-        // Assets are already loaded via manifest.json
-        // Just verify they're available
-        if (typeof customElements === 'undefined') {
-            throw new Error('Custom elements not supported');
-        }
-        
-        if (!window.marked) {
-            throw new Error('Marked library not loaded');
+        try {
+            console.log('Bonsai SAT: Loading assets...');
+            
+            // Check if custom elements are supported
+            if (typeof customElements === 'undefined') {
+                throw new Error('Custom elements not supported');
+            }
+            
+            // Check if marked is loaded
+            if (!window.marked) {
+                console.warn('Marked library not loaded, but continuing...');
+            }
+            
+            // Load the main app component dynamically
+            const extensionUrl = chrome.runtime.getURL('');
+            console.log('Extension URL:', extensionUrl);
+            
+            // Create script element to load the BonsaiSATApp
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.src = chrome.runtime.getURL('src/app/BonsaiSATApp.js');
+            
+            // Wait for script to load
+            await new Promise((resolve, reject) => {
+                script.onload = () => {
+                    console.log('Bonsai SAT: App component loaded');
+                    resolve();
+                };
+                script.onerror = (error) => {
+                    console.error('Bonsai SAT: Failed to load app component:', error);
+                    reject(error);
+                };
+                document.head.appendChild(script);
+            });
+            
+            // Wait a bit for component registration
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+        } catch (error) {
+            console.error('Bonsai SAT: Asset loading error:', error);
+            throw error;
         }
     }
 
     function createBonsaiContainer() {
+        console.log('Bonsai SAT: Creating container...');
+        
         // Create the floating container for Bonsai assistant
         const container = document.createElement('div');
         container.id = 'bonsai-sat-container';
@@ -87,21 +122,57 @@
             z-index: 999999;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             pointer-events: auto;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
         `;
 
         // Create the app instance
+        console.log('Bonsai SAT: Creating app element...');
         const app = document.createElement('bonsai-sat-app');
         app.id = 'bonsai-sat-app';
         
+        // Add some basic styling to the app element
+        app.style.cssText = `
+            display: block;
+            width: 100%;
+            height: 100%;
+            min-height: 200px;
+            color: #e5e5e7;
+            background: transparent;
+        `;
+        
+        // Add fallback content in case the component doesn't load
+        app.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #e5e5e7;">
+                <div style="margin-bottom: 10px;">🌱</div>
+                <div style="font-weight: 600; margin-bottom: 5px;">Bonsai SAT Prep</div>
+                <div style="font-size: 14px; opacity: 0.7;">Loading assistant...</div>
+            </div>
+        `;
+        
         container.appendChild(app);
-        document.body.appendChild(container);
+        
+        // Add to body with error handling
+        try {
+            document.body.appendChild(container);
+            console.log('Bonsai SAT: Container added to page');
+        } catch (error) {
+            console.error('Bonsai SAT: Failed to add container to page:', error);
+            return null;
+        }
 
-        // Initialize as hidden
+        // Show container after a delay
         setTimeout(() => {
             container.style.transform = 'translateX(0)';
-        }, 100);
+            console.log('Bonsai SAT: Container made visible');
+        }, 500);
 
         return { container, app };
     }

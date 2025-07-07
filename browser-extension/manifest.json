@@ -69,11 +69,13 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/app/*",
-        "src/assets/*",
-        "src/styles/*",
-        "src/features/*",
-        "images/*"
+        "src/app/*.js",
+        "src/assets/*.js",
+        "src/styles/*.css",
+        "src/features/*.js",
+        "src/features/*/*.js",
+        "src/lib/*.js",
+        "images/*.png"
       ],
       "matches": [
         "*://*.khanacademy.org/*",
