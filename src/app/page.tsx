@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { BonsaiWrapper } from '@/components/BonsaiWrapper';
 import { 
   ArrowRight, 
   BookOpen, 
@@ -631,6 +632,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Bonsai AI Assistant */}
+      <BonsaiWrapper className="fixed bottom-6 right-6 z-50" />
     </div>
   );
 }

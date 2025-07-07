@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Camera access for screen context awareness (Glass-inspired) -->
+    <key>com.apple.security.device.camera</key>
+    <true/>
+    
+    <!-- Microphone access for voice interactions -->
+    <key>com.apple.security.device.microphone</key>
+    <true/>
+    
+    <!-- Screen recording for SAT context detection -->
+    <key>com.apple.security.device.screen-recording</key>
+    <true/>
+    
+    <!-- Network access for AI services -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <!-- Outgoing network connections -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    
+    <!-- File access for study materials -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    
+    <!-- Downloads folder access for exports -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+    
+    <!-- JIT compilation for JavaScript engine -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    
+    <!-- Unsigned executable memory for V8 -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    
+    <!-- Disable library validation for native modules -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    
+    <!-- App Sandbox (optional - can be disabled for more permissions) -->
+    <!-- <key>com.apple.security.app-sandbox</key>
+    <true/> -->
+    
+    <!-- Accessibility API for Glass-inspired context detection -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+    
+    <!-- Print access for study materials -->
+    <key>com.apple.security.print</key>
+    <true/>
+    
+    <!-- Address book access for study group features -->
+    <key>com.apple.security.personal-information.addressbook</key>
+    <false/>
+    
+    <!-- Calendar access for study scheduling -->
+    <key>com.apple.security.personal-information.calendars</key>
+    <false/>
+    
+    <!-- Location services for time zone detection -->
+    <key>com.apple.security.personal-information.location</key>
+    <false/>
+    
+    <!-- Photo library access for image-based questions -->
+    <key>com.apple.security.personal-information.photos-library</key>
+    <false/>
+</dict>
+</plist>

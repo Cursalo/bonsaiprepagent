@@ -1,0 +1,129 @@
+{
+  "manifest_version": 3,
+  "name": "Bonsai SAT Prep Assistant",
+  "version": "1.0.0",
+  "description": "AI-powered SAT prep assistant that provides contextual help on Khan Academy, College Board, and other SAT practice platforms.",
+  "author": "Bonsai Education Technologies",
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "identity",
+    "offscreen",
+    "webNavigation",
+    "declarativeNetRequest"
+  ],
+  
+  "host_permissions": [
+    "*://*.khanacademy.org/*",
+    "*://*.collegeboard.org/*",
+    "*://*.satsuite.collegeboard.org/*",
+    "*://*.apstudents.collegeboard.org/*",
+    "*://*.bonsai-sat-prep.com/*",
+    "*://localhost:*/*",
+    "*://bonsaiprepagent.vercel.app/*"
+  ],
+  
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.khanacademy.org/*",
+        "*://*.collegeboard.org/*",
+        "*://*.satsuite.collegeboard.org/*",
+        "*://*.apstudents.collegeboard.org/*"
+      ],
+      "js": [
+        "src/lib/constants.js",
+        "src/lib/utils.js",
+        "src/lib/api-client.js",
+        "src/lib/context-detector.js",
+        "src/content/bonsai-injector.js"
+      ],
+      "css": [
+        "src/styles/bonsai-bubble.css",
+        "src/styles/glass-ui.css"
+      ],
+      "run_at": "document_end",
+      "all_frames": false
+    }
+  ],
+  
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Bonsai SAT Prep Assistant",
+    "default_icon": {
+      "16": "images/icon-16.png",
+      "32": "images/icon-32.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "images/icon-16.png",
+    "32": "images/icon-32.png",
+    "48": "images/icon-48.png",
+    "128": "images/icon-128.png"
+  },
+  
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "src/content/bonsai-bubble.html",
+        "src/styles/*.css",
+        "images/*"
+      ],
+      "matches": [
+        "*://*.khanacademy.org/*",
+        "*://*.collegeboard.org/*",
+        "*://*.satsuite.collegeboard.org/*",
+        "*://*.apstudents.collegeboard.org/*"
+      ]
+    }
+  ],
+  
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "ruleset_1",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  
+  "commands": {
+    "toggle-bonsai": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+B",
+        "mac": "Command+Shift+B"
+      },
+      "description": "Toggle Bonsai Assistant"
+    },
+    "quick-help": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+H",
+        "mac": "Command+Shift+H"
+      },
+      "description": "Quick help for current question"
+    }
+  },
+  
+  "options_page": "src/popup/options.html",
+  
+  "minimum_chrome_version": "88",
+  
+  "externally_connectable": {
+    "matches": [
+      "*://localhost:*/*",
+      "*://bonsaiprepagent.vercel.app/*",
+      "*://*.bonsai-sat-prep.com/*"
+    ]
+  }
+}

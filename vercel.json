@@ -1,0 +1,155 @@
+{
+  "version": 2,
+  "name": "bonsai-sat-prep",
+  "projectSettings": {
+    "framework": "nextjs",
+    "outputDirectory": ".next"
+  },
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@supabase-url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@supabase-anon-key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
+    "STRIPE_SECRET_KEY": "@stripe-secret-key",
+    "STRIPE_WEBHOOK_SECRET": "@stripe-webhook-secret",
+    "OPENAI_API_KEY": "@openai-api-key",
+    "GEMINI_API_KEY": "@gemini-api-key",
+    "NEXTAUTH_SECRET": "@nextauth-secret",
+    "NEXTAUTH_URL": "@nextauth-url"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "app/api/ai/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 60
+    },
+    "app/api/webhooks/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://bonsai-sat.com"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/dashboard",
+      "destination": "/app/dashboard",
+      "permanent": true
+    },
+    {
+      "source": "/login",
+      "destination": "/auth/signin",
+      "permanent": true
+    },
+    {
+      "source": "/register",
+      "destination": "/auth/signup",
+      "permanent": true
+    },
+    {
+      "source": "/pricing",
+      "destination": "/subscribe",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/stripe/webhook",
+      "destination": "/api/webhooks/stripe"
+    },
+    {
+      "source": "/api/supabase/webhook",
+      "destination": "/api/webhooks/supabase"
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/app/:path*"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/daily-streak-check",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/cleanup-temp-data",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/generate-reports",
+      "schedule": "0 6 * * 1"
+    }
+  ],
+  "regions": ["iad1", "sfo1"],
+  "github": {
+    "enabled": true,
+    "autoAlias": true
+  }
+}
