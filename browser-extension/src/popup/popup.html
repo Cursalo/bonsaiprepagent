@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bonsai SAT Prep Assistant</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span class="emoji">🌱</span>
+        <span class="title">Bonsai</span>
+      </div>
+      <div class="status-indicator" id="statusIndicator">
+        <span class="status-dot"></span>
+        <span class="status-text">Connected</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+      <!-- Current Site Status -->
+      <div class="site-status" id="siteStatus">
+        <div class="site-info">
+          <span class="site-name" id="siteName">Khan Academy</span>
+          <span class="support-badge" id="supportBadge">✅ Supported</span>
+        </div>
+        <div class="help-count">
+          <span class="count-number" id="helpCount">0</span>
+          <span class="count-label">AI interactions today</span>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="action-btn primary" id="toggleBonsai">
+          <span class="btn-icon">🤖</span>
+          <span class="btn-text">Toggle Assistant</span>
+        </button>
+        
+        <button class="action-btn secondary" id="quickHelp">
+          <span class="btn-icon">💡</span>
+          <span class="btn-text">Quick Help</span>
+        </button>
+      </div>
+
+      <!-- Feature Toggles -->
+      <div class="features">
+        <div class="feature-item">
+          <label for="voiceToggle" class="feature-label">
+            <span class="feature-icon">🎤</span>
+            <span class="feature-text">Voice Commands</span>
+          </label>
+          <input type="checkbox" id="voiceToggle" class="toggle-switch">
+        </div>
+        
+        <div class="feature-item">
+          <label for="autoDetect" class="feature-label">
+            <span class="feature-icon">🔍</span>
+            <span class="feature-text">Auto-detect Questions</span>
+          </label>
+          <input type="checkbox" id="autoDetect" class="toggle-switch" checked>
+        </div>
+      </div>
+
+      <!-- Usage Stats -->
+      <div class="stats" id="usageStats">
+        <div class="stat-item">
+          <span class="stat-value" id="dailyUsage">5</span>
+          <span class="stat-label">Daily Limit</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="streakCount">3</span>
+          <span class="stat-label">Day Streak</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="totalHelp">127</span>
+          <span class="stat-label">Total Help</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="links">
+        <a href="#" id="settingsLink" class="footer-link">⚙️ Settings</a>
+        <a href="#" id="upgradeLink" class="footer-link">⭐ Upgrade</a>
+        <a href="#" id="helpLink" class="footer-link">❓ Help</a>
+      </div>
+      <div class="version">v1.0.0</div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

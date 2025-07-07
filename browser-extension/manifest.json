@@ -2,17 +2,13 @@
   "manifest_version": 3,
   "name": "Bonsai SAT Prep Assistant",
   "version": "1.0.0",
-  "description": "AI-powered SAT prep assistant that provides contextual help on Khan Academy, College Board, and other SAT practice platforms.",
+  "description": "Real-time AI tutor for SAT prep on Khan Academy, College Board, and other platforms.",
   "author": "Bonsai Education Technologies",
   
   "permissions": [
     "storage",
     "activeTab",
-    "scripting",
-    "identity",
-    "offscreen",
-    "webNavigation",
-    "declarativeNetRequest"
+    "scripting"
   ],
   
   "host_permissions": [
@@ -20,9 +16,7 @@
     "*://*.collegeboard.org/*",
     "*://*.satsuite.collegeboard.org/*",
     "*://*.apstudents.collegeboard.org/*",
-    "*://*.bonsai-sat-prep.com/*",
-    "*://localhost:*/*",
-    "*://bonsaiprepagent.vercel.app/*"
+    "*://*.bluebook.collegeboard.org/*"
   ],
   
   "background": {
@@ -36,18 +30,16 @@
         "*://*.khanacademy.org/*",
         "*://*.collegeboard.org/*",
         "*://*.satsuite.collegeboard.org/*",
-        "*://*.apstudents.collegeboard.org/*"
+        "*://*.apstudents.collegeboard.org/*",
+        "*://*.bluebook.collegeboard.org/*"
       ],
       "js": [
-        "src/lib/constants.js",
-        "src/lib/utils.js",
-        "src/lib/api-client.js",
-        "src/lib/context-detector.js",
+        "src/assets/lit-core-2.7.4.min.js",
+        "src/assets/marked-4.3.0.min.js",
         "src/content/bonsai-injector.js"
       ],
       "css": [
-        "src/styles/bonsai-bubble.css",
-        "src/styles/glass-ui.css"
+        "src/styles/bonsai-glass.css"
       ],
       "run_at": "document_end",
       "all_frames": false
@@ -75,28 +67,21 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "src/content/bonsai-bubble.html",
-        "src/styles/*.css",
+        "src/app/*",
+        "src/assets/*",
+        "src/styles/*",
+        "src/features/*",
         "images/*"
       ],
       "matches": [
         "*://*.khanacademy.org/*",
         "*://*.collegeboard.org/*",
         "*://*.satsuite.collegeboard.org/*",
-        "*://*.apstudents.collegeboard.org/*"
+        "*://*.apstudents.collegeboard.org/*",
+        "*://*.bluebook.collegeboard.org/*"
       ]
     }
   ],
-  
-  "declarative_net_request": {
-    "rule_resources": [
-      {
-        "id": "ruleset_1",
-        "enabled": true,
-        "path": "rules.json"
-      }
-    ]
-  },
   
   "commands": {
     "toggle-bonsai": {
@@ -115,15 +100,5 @@
     }
   },
   
-  "options_page": "src/popup/options.html",
-  
-  "minimum_chrome_version": "88",
-  
-  "externally_connectable": {
-    "matches": [
-      "*://localhost:*/*",
-      "*://bonsaiprepagent.vercel.app/*",
-      "*://*.bonsai-sat-prep.com/*"
-    ]
-  }
+  "minimum_chrome_version": "88"
 }

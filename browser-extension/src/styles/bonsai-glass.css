@@ -1,0 +1,528 @@
+/* Bonsai SAT Glass-Inspired Styles */
+/* Adapted from Glass repository for SAT prep assistant */
+
+:root {
+    /* Bonsai SAT brand colors */
+    --bonsai-primary: #10b981;
+    --bonsai-secondary: #f59e0b;
+    --bonsai-accent: #8b5cf6;
+    --bonsai-success: #22c55e;
+    --bonsai-warning: #f59e0b;
+    --bonsai-error: #ef4444;
+    
+    /* Glass-inspired theme variables */
+    --background-transparent: rgba(0, 0, 0, 0.85);
+    --text-color: #e5e5e7;
+    --border-color: rgba(255, 255, 255, 0.2);
+    --header-background: rgba(16, 185, 129, 0.15);
+    --header-actions-color: rgba(255, 255, 255, 0.8);
+    --main-content-background: rgba(0, 0, 0, 0.9);
+    --button-background: rgba(16, 185, 129, 0.2);
+    --button-border: rgba(16, 185, 129, 0.3);
+    --icon-button-color: #e5e5e7;
+    --hover-background: rgba(16, 185, 129, 0.1);
+    --input-background: rgba(0, 0, 0, 0.4);
+    --placeholder-color: rgba(255, 255, 255, 0.5);
+    --focus-border-color: var(--bonsai-primary);
+    --focus-box-shadow: rgba(16, 185, 129, 0.3);
+    --input-focus-background: rgba(0, 0, 0, 0.6);
+    --scrollbar-track: rgba(0, 0, 0, 0.3);
+    --scrollbar-thumb: rgba(16, 185, 129, 0.4);
+    --scrollbar-thumb-hover: rgba(16, 185, 129, 0.6);
+    
+    /* SAT-specific variables */
+    --math-color: #3b82f6;
+    --reading-color: #10b981;
+    --writing-color: #f59e0b;
+    --difficulty-easy: #22c55e;
+    --difficulty-medium: #f59e0b;
+    --difficulty-hard: #ef4444;
+    
+    /* Layout variables */
+    --header-padding: 12px 16px;
+    --header-font-size: 14px;
+    --header-gap: 8px;
+    --header-button-padding: 6px 12px;
+    --header-icon-padding: 6px;
+    --main-content-padding: 16px;
+    --main-content-margin-top: 8px;
+    --icon-size: 20px;
+    --border-radius: 8px;
+    --content-border-radius: 8px;
+    
+    /* Animation variables */
+    --transition-fast: 0.15s cubic-bezier(0.23, 1, 0.32, 1);
+    --transition-medium: 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+    --transition-slow: 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Base styles */
+* {
+    box-sizing: border-box;
+}
+
+#bonsai-sat-container {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--text-color);
+    background: var(--background-transparent);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Component base styles */
+bonsai-sat-app {
+    display: block;
+    width: 100%;
+    min-height: 200px;
+    max-height: 600px;
+    overflow: hidden;
+}
+
+sat-assistant-view,
+sat-customize-view,
+sat-help-view,
+sat-onboarding-view {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* Header styles */
+.bonsai-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--header-padding);
+    background: var(--header-background);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.bonsai-header-title {
+    font-size: var(--header-font-size);
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: var(--header-gap);
+}
+
+.bonsai-logo {
+    width: var(--icon-size);
+    height: var(--icon-size);
+    background: linear-gradient(135deg, var(--bonsai-primary), var(--bonsai-accent));
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+}
+
+.bonsai-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bonsai-header-button {
+    padding: var(--header-button-padding);
+    background: var(--button-background);
+    border: 1px solid var(--button-border);
+    border-radius: 6px;
+    color: var(--header-actions-color);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.bonsai-header-button:hover {
+    background: var(--hover-background);
+    border-color: var(--bonsai-primary);
+    transform: translateY(-1px);
+}
+
+.bonsai-icon-button {
+    padding: var(--header-icon-padding);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--icon-button-color);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bonsai-icon-button:hover {
+    background: var(--hover-background);
+    border-color: var(--border-color);
+}
+
+/* Main content area */
+.bonsai-content {
+    padding: var(--main-content-padding);
+    background: var(--main-content-background);
+    overflow-y: auto;
+    max-height: calc(600px - 50px); /* Adjust based on header height */
+}
+
+.bonsai-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.bonsai-content::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 3px;
+}
+
+.bonsai-content::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 3px;
+}
+
+.bonsai-content::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+/* Question analysis display */
+.question-analysis {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: var(--content-border-radius);
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.question-type {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.question-type.multiple-choice {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.question-type.student-response {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.question-type.grid-in {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+/* Subject indicators */
+.subject-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-right: 6px;
+}
+
+.subject-badge.math {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.subject-badge.reading {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+}
+
+.subject-badge.writing {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+/* Difficulty indicators */
+.difficulty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.difficulty-badge.easy {
+    background: rgba(34, 197, 94, 0.2);
+    color: #86efac;
+}
+
+.difficulty-badge.medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+
+.difficulty-badge.hard {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+/* Platform indicators */
+.platform-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 500;
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+}
+
+/* Help content */
+.help-section {
+    margin-bottom: 16px;
+}
+
+.help-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--bonsai-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.help-content {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-color);
+}
+
+.hint-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.hint-item {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.hint-item:last-child {
+    border-bottom: none;
+}
+
+.hint-icon {
+    color: var(--bonsai-primary);
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+/* Input and form elements */
+.bonsai-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: var(--input-background);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-color);
+    font-size: 12px;
+    transition: all var(--transition-fast);
+}
+
+.bonsai-input::placeholder {
+    color: var(--placeholder-color);
+}
+
+.bonsai-input:focus {
+    outline: none;
+    background: var(--input-focus-background);
+    border-color: var(--focus-border-color);
+    box-shadow: 0 0 0 2px var(--focus-box-shadow);
+}
+
+.bonsai-button {
+    padding: 8px 16px;
+    background: var(--bonsai-primary);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bonsai-button:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.bonsai-button:active {
+    transform: translateY(0);
+}
+
+.bonsai-button.secondary {
+    background: var(--button-background);
+    color: var(--text-color);
+    border: 1px solid var(--button-border);
+}
+
+.bonsai-button.secondary:hover {
+    background: var(--hover-background);
+    border-color: var(--bonsai-primary);
+}
+
+/* Status indicators */
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-color);
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--bonsai-primary);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Loading states */
+.loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--bonsai-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Glass-inspired animations */
+.bonsai-slide-in {
+    animation: slideIn var(--transition-medium) ease-out forwards;
+    transform: translateX(100%);
+}
+
+.bonsai-slide-out {
+    animation: slideOut var(--transition-medium) ease-in forwards;
+}
+
+.bonsai-fade-in {
+    animation: fadeIn var(--transition-medium) ease-out forwards;
+    opacity: 0;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    :root {
+        --header-padding: 8px 12px;
+        --main-content-padding: 12px;
+        --header-font-size: 13px;
+        --icon-size: 18px;
+    }
+    
+    #bonsai-sat-container {
+        width: calc(100vw - 20px);
+        max-width: 350px;
+    }
+}
+
+/* Accessibility improvements */
+.bonsai-button:focus,
+.bonsai-input:focus,
+.bonsai-header-button:focus,
+.bonsai-icon-button:focus {
+    outline: 2px solid var(--bonsai-primary);
+    outline-offset: 2px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --text-color: #ffffff;
+        --border-color: #ffffff;
+        --background-transparent: rgba(0, 0, 0, 0.95);
+    }
+}
