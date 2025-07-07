@@ -27,7 +27,7 @@ export function VoiceInterface({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volume, setVolume] = useState(0);
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -56,14 +56,16 @@ export function VoiceInterface({
         recognition.onresult = (event) => {
           let finalTranscript = '';
           let interimTranscript = '';
+          let resultConfidence = 0;
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const transcript = event.results[i][0].transcript;
-            const resultConfidence = event.results[i][0].confidence;
+            const confidence = event.results[i][0].confidence;
             
             if (event.results[i].isFinal) {
               finalTranscript += transcript;
-              setConfidence(resultConfidence);
+              resultConfidence = confidence;
+              setConfidence(confidence);
             } else {
               interimTranscript += transcript;
             }
@@ -450,8 +452,8 @@ export function VoiceInterface({
 // Extend Window interface for TypeScript
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
     AudioContext: typeof AudioContext;
     webkitAudioContext: typeof AudioContext;
   }

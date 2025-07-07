@@ -187,6 +187,7 @@ export function BonsaiTree({
       const timer = setTimeout(() => setShowParticles(false), 2000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [state.level, animated]);
 
   // Interactive handlers
