@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js', 'stripe', 'openai'],
-    optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@heroicons/react']
+    optimizePackageImports: ['lucide-react']
   },
   images: {
     domains: [
@@ -93,44 +91,12 @@ const nextConfig = {
       permanent: true
     }
   ],
-  webpack: (config, { dev, isServer, webpack }) => {
-    // Optimize for production builds
-    if (!dev && !isServer) {
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        '@': require('path').resolve(__dirname, 'src')
-      };
-    }
-
-    // Add support for importing audio files
-    config.module.rules.push({
-      test: /\.(mp3|wav|ogg)$/,
-      use: {
-        loader: 'file-loader',
-        options: {
-          publicPath: '/_next/static/audio/',
-          outputPath: 'static/audio/'
-        }
-      }
-    });
-
-    // Optimize three.js for smaller bundle size
+  webpack: (config, { dev, isServer }) => {
+    // Basic path alias for demo
     config.resolve.alias = {
       ...config.resolve.alias,
-      three: require('path').resolve('./node_modules/three')
+      '@': require('path').resolve(__dirname, 'src')
     };
-
-    // Bundle analyzer
-    if (process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'static',
-          openAnalyzer: false
-        })
-      );
-    }
-
     return config;
   },
   poweredByHeader: false,
@@ -157,12 +123,4 @@ const nextConfig = {
   }
 };
 
-// Bundle analyzer configuration
-if (process.env.ANALYZE === 'true') {
-  const withBundleAnalyzer = require('@next/bundle-analyzer')({
-    enabled: true
-  });
-  module.exports = withBundleAnalyzer(nextConfig);
-} else {
-  module.exports = nextConfig;
-}
+module.exports = nextConfig;
