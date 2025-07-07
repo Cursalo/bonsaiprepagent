@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 
 const inter = Inter({
@@ -191,9 +189,7 @@ export default function RootLayout({
         {/* Bonsai bubble container */}
         <div id="bonsai-root" />
         
-        {/* Analytics and monitoring */}
-        <Analytics />
-        <SpeedInsights />
+        {/* Analytics and monitoring - removed for demo */}
         
         {/* Service Worker registration */}
         <script
