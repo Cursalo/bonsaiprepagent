@@ -76,157 +76,23 @@
                 console.warn('Marked library not loaded, but continuing...');
             }
             
-            // Inject LitElement and Bonsai components via script injection
-            const scriptContent = `
-                import { LitElement, html, css } from '${chrome.runtime.getURL('src/assets/lit-core-2.7.4.min.js')}';
-                
-                // Simple Bonsai SAT App Component
-                class BonsaiSATApp extends LitElement {
-                    static styles = css\`
-                        :host {
-                            display: block;
-                            width: 100%;
-                            height: 100%;
-                            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-                            color: #e5e5e7;
-                        }
-                        
-                        .container {
-                            padding: 20px;
-                            text-align: center;
-                        }
-                        
-                        .header {
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            gap: 8px;
-                            margin-bottom: 16px;
-                        }
-                        
-                        .logo {
-                            font-size: 24px;
-                        }
-                        
-                        .title {
-                            font-size: 18px;
-                            font-weight: 600;
-                        }
-                        
-                        .status {
-                            background: rgba(34, 197, 94, 0.2);
-                            border: 1px solid rgba(34, 197, 94, 0.4);
-                            border-radius: 6px;
-                            padding: 8px 12px;
-                            margin: 16px 0;
-                            font-size: 12px;
-                        }
-                        
-                        .actions {
-                            display: flex;
-                            flex-direction: column;
-                            gap: 8px;
-                            margin-top: 16px;
-                        }
-                        
-                        .btn {
-                            background: rgba(255, 255, 255, 0.1);
-                            border: 1px solid rgba(255, 255, 255, 0.2);
-                            border-radius: 6px;
-                            color: #e5e5e7;
-                            padding: 8px 12px;
-                            font-size: 12px;
-                            cursor: pointer;
-                            transition: background 0.2s;
-                        }
-                        
-                        .btn:hover {
-                            background: rgba(255, 255, 255, 0.15);
-                        }
-                        
-                        .btn.primary {
-                            background: rgba(34, 197, 94, 0.2);
-                            border-color: rgba(34, 197, 94, 0.4);
-                        }
-                        
-                        .btn.primary:hover {
-                            background: rgba(34, 197, 94, 0.3);
-                        }
-                    \`;
-                    
-                    static properties = {
-                        currentQuestion: { type: Object },
-                        isConnected: { type: Boolean }
-                    };
-                    
-                    constructor() {
-                        super();
-                        this.currentQuestion = null;
-                        this.isConnected = true;
-                    }
-                    
-                    handleQuestionDetected(questionData) {
-                        this.currentQuestion = questionData;
-                        this.requestUpdate();
-                    }
-                    
-                    handleGetHint() {
-                        if (!this.currentQuestion) {
-                            alert('No question detected. Navigate to a SAT question first.');
-                            return;
-                        }
-                        
-                        // For now, show a simple hint
-                        alert('💡 Hint: Break down the problem step by step. What is the question asking for?');
-                    }
-                    
-                    render() {
-                        return html\`
-                            <div class="container">
-                                <div class="header">
-                                    <span class="logo">🌱</span>
-                                    <span class="title">Bonsai SAT Prep</span>
-                                </div>
-                                
-                                <div class="status">
-                                    \${this.isConnected ? '✅ Connected' : '❌ Disconnected'}
-                                </div>
-                                
-                                \${this.currentQuestion ? html\`
-                                    <div class="status">
-                                        📚 Question detected: \${this.currentQuestion.subject}
-                                    </div>
-                                    
-                                    <div class="actions">
-                                        <button class="btn primary" @click=\${this.handleGetHint}>
-                                            💡 Get Hint
-                                        </button>
-                                        <button class="btn" @click=\${() => alert('🧠 Feature coming soon!')}>
-                                            🧠 Explain Concept
-                                        </button>
-                                        <button class="btn" @click=\${() => alert('📝 Feature coming soon!')}>
-                                            📝 Show Solution
-                                        </button>
-                                    </div>
-                                \` : html\`
-                                    <div class="status">
-                                        Navigate to a SAT question to get started
-                                    </div>
-                                \`}
-                            </div>
-                        \`;
-                    }
-                }
-                
-                customElements.define('bonsai-sat-app', BonsaiSATApp);
-                console.log('Bonsai SAT: Components loaded successfully');
-            `;
-            
-            // Create and inject the script
+            // Load the external module file to avoid CSP issues
             const script = document.createElement('script');
             script.type = 'module';
-            script.textContent = scriptContent;
-            document.head.appendChild(script);
+            script.src = chrome.runtime.getURL('src/app/BonsaiSATAppSimple.js');
+            
+            // Wait for script to load
+            await new Promise((resolve, reject) => {
+                script.onload = () => {
+                    console.log('Bonsai SAT: Simple app component loaded');
+                    resolve();
+                };
+                script.onerror = (error) => {
+                    console.error('Bonsai SAT: Failed to load simple app component:', error);
+                    reject(error);
+                };
+                document.head.appendChild(script);
+            });
             
             // Wait for component registration
             await new Promise(resolve => setTimeout(resolve, 200));

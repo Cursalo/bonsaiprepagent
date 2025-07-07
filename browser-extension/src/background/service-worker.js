@@ -373,6 +373,10 @@ async function handleMessage(message, sender) {
             await handleAuthentication(message.token);
             return { success: true };
             
+        case 'openSettings':
+            await chrome.runtime.openOptionsPage();
+            return { success: true };
+            
         default:
             return { 
                 success: false, 
