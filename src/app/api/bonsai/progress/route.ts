@@ -182,10 +182,15 @@ function calculateProgressStats(bonsaiState: any, recentInteractions: any[]) {
     experienceThisWeek: totalExperienceThisWeek,
     interactionsThisWeek: weeklyInteractions.length,
     levelUpsThisWeek,
-    favoriteAssistanceType: Object.entries(interactionsByType).reduce(
-      (max, [type, count]) => count > (max.count || 0) ? { type, count } : max,
-      {} as { type?: string; count?: number }
-    ).type || 'hint',
+    favoriteAssistanceType: (() => {
+      const entries = Object.entries(interactionsByType) as [string, number][];
+      const max = entries.reduce(
+        (max: { type?: string; count?: number }, [type, count]) => 
+          count > (max.count || 0) ? { type, count } : max,
+        {} as { type?: string; count?: number }
+      );
+      return max.type || 'hint';
+    })(),
     growthStage: bonsaiState.growth_stage,
     totalExperience: bonsaiState.total_experience,
   };

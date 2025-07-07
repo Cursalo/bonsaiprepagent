@@ -56,7 +56,6 @@ export async function GET(request: NextRequest) {
       tierInfo: {
         name: tierConfig.name,
         price: tierConfig.price,
-        description: tierConfig.description,
         features: Object.entries(tierConfig.features)
           .filter(([, enabled]) => enabled)
           .map(([feature]) => feature),
@@ -89,7 +88,6 @@ function getUpgradeOptions(currentTier: string) {
       tier,
       name: config.name,
       price: config.price,
-      description: config.description,
       priceId: config.priceId,
       features: Object.entries(config.features)
         .filter(([, enabled]) => enabled)

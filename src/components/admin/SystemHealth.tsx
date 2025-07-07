@@ -101,7 +101,7 @@ export function SystemHealth({ data, loading }: SystemHealthProps) {
 
   // Simulate real-time updates
   useEffect(() => {
-    if (!data) return;
+    if (!data) return () => {};
 
     const interval = setInterval(() => {
       setRealtimeMetrics((prev: any) => ({

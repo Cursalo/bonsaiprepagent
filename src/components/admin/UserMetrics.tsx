@@ -187,7 +187,7 @@ export function UserMetrics({ data, loading }: UserMetricsProps) {
                         <Crown className="w-3 h-3 text-yellow-500" />
                       )}
                     </div>
-                    <Badge variant="secondary">{tier.value}</Badge>
+                    <Badge variant="secondary">{String(tier.value)}</Badge>
                   </div>
                 ))}
               </div>

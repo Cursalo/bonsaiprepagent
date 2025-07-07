@@ -298,7 +298,7 @@ export class GlassContextDetector {
     }
     
     // General confidence factors
-    if (element.offsetWidth > 0 && element.offsetHeight > 0) confidence += 0.1;
+    if ((element as HTMLElement).offsetWidth > 0 && (element as HTMLElement).offsetHeight > 0) confidence += 0.1;
     if (window.getComputedStyle(element).display !== 'none') confidence += 0.1;
     
     return Math.min(1.0, confidence);

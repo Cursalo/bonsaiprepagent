@@ -130,7 +130,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
           : undefined,
         changeLabel: 'new this period',
         icon: Users,
-        trend: analytics.users?.newUsers > 0 ? 'up' : 'neutral' as const,
+        trend: (analytics.users?.newUsers > 0 ? 'up' : 'neutral') as 'up' | 'down' | 'neutral',
       },
       {
         title: 'Active Users',
@@ -138,7 +138,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
         change: analytics.users?.retentionRate,
         changeLabel: 'retention rate',
         icon: Activity,
-        trend: (analytics.users?.retentionRate || 0) > 50 ? 'up' : 'down' as const,
+        trend: ((analytics.users?.retentionRate || 0) > 50 ? 'up' : 'down') as 'up' | 'down' | 'neutral',
         format: 'number' as const,
       },
       {
@@ -149,7 +149,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
           : undefined,
         changeLabel: 'new subscriptions',
         icon: DollarSign,
-        trend: analytics.revenue?.newSubscriptions > 0 ? 'up' : 'neutral' as const,
+        trend: (analytics.revenue?.newSubscriptions > 0 ? 'up' : 'neutral') as 'up' | 'down' | 'neutral',
         format: 'currency' as const,
       },
       {
@@ -160,7 +160,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
           : undefined,
         changeLabel: 'avg confidence',
         icon: MessageSquare,
-        trend: (analytics.aiInteractions?.performance?.avgConfidence || 0) > 0.8 ? 'up' : 'neutral' as const,
+        trend: ((analytics.aiInteractions?.performance?.avgConfidence || 0) > 0.8 ? 'up' : 'neutral') as 'up' | 'down' | 'neutral',
       },
       {
         title: 'Study Sessions',
@@ -170,7 +170,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
           : undefined,
         changeLabel: 'avg minutes',
         icon: Clock,
-        trend: 'neutral' as const,
+        trend: 'neutral' as 'up' | 'down' | 'neutral',
       },
       {
         title: 'Achievements',
@@ -178,7 +178,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
         change: analytics.achievements?.avgBonsaiLevel,
         changeLabel: 'avg Bonsai level',
         icon: Award,
-        trend: (analytics.achievements?.avgBonsaiLevel || 0) > 10 ? 'up' : 'neutral' as const,
+        trend: ((analytics.achievements?.avgBonsaiLevel || 0) > 10 ? 'up' : 'neutral') as 'up' | 'down' | 'neutral',
       },
       {
         title: 'Response Time',
@@ -190,7 +190,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
           : undefined,
         changeLabel: 'DB response time',
         icon: TrendingUp,
-        trend: (analytics.aiInteractions?.performance?.avgResponseTime || 0) < 2000 ? 'up' : 'down' as const,
+        trend: ((analytics.aiInteractions?.performance?.avgResponseTime || 0) < 2000 ? 'up' : 'down') as 'up' | 'down' | 'neutral',
       },
       {
         title: 'System Health',
@@ -198,7 +198,7 @@ export function AnalyticsOverview({ analytics, loading }: AnalyticsOverviewProps
         change: analytics.systemHealth?.errorRate,
         changeLabel: 'error rate',
         icon: Target,
-        trend: (analytics.systemHealth?.uptime || 0) > 99 ? 'up' : 'down' as const,
+        trend: ((analytics.systemHealth?.uptime || 0) > 99 ? 'up' : 'down') as 'up' | 'down' | 'neutral',
         format: 'percentage' as const,
       },
     ];

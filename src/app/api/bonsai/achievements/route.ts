@@ -291,7 +291,7 @@ async function calculateStudyStreak(userId: string): Promise<number> {
     });
 
     const sortedDates = Array.from(studyDates).sort((a, b) => 
-      new Date(b).getTime() - new Date(a).getTime()
+      new Date(b as string).getTime() - new Date(a as string).getTime()
     );
 
     // Calculate consecutive streak from most recent date

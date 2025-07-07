@@ -21,7 +21,7 @@ import {
   Search,
   Settings,
   LogOut,
-  User,
+  User as UserIcon,
   Home,
   AlertCircle,
 } from 'lucide-react';
@@ -125,7 +125,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="flex items-start gap-3 p-3">
-                  <User className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <UserIcon className="w-4 h-4 text-blue-500 mt-0.5" />
                   <div className="flex-1">
                     <p className="text-sm font-medium">New Pro Subscription</p>
                     <p className="text-xs text-gray-500">john.doe@example.com upgraded to Pro</p>
@@ -177,7 +177,7 @@ export function AdminHeader({ user }: AdminHeaderProps) {
                 <span>Go to App</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
-                <User className="mr-2 h-4 w-4" />
+                <UserIcon className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/admin/system/config')}>

@@ -407,7 +407,7 @@ async function getPerformanceAnalytics(dateRange: { start: string; end: string }
       .gte('created_at', dateRange.start)
       .lte('created_at', dateRange.end);
 
-    const subjectPerformance = subjectData?.reduce((acc, answer) => {
+    const subjectPerformance = subjectData?.reduce((acc, answer: any) => {
       const domain = answer.questions?.domain || 'unknown';
       if (!acc[domain]) {
         acc[domain] = { correct: 0, total: 0 };
@@ -503,7 +503,7 @@ async function getAchievementAnalytics(dateRange: { start: string; end: string }
       .gte('unlocked_at', dateRange.start)
       .lte('unlocked_at', dateRange.end);
 
-    const achievementCounts = popularAchievements?.reduce((acc, ua) => {
+    const achievementCounts = popularAchievements?.reduce((acc, ua: any) => {
       const name = ua.achievements?.name || 'Unknown';
       acc[name] = (acc[name] || 0) + 1;
       return acc;
