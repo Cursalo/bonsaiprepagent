@@ -1,12 +1,10 @@
 import OpenAI from 'openai';
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error('Missing OPENAI_API_KEY environment variable');
-}
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const openai = process.env.OPENAI_API_KEY 
+  ? new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    })
+  : null;
 
 export interface ChatMessage {
   role: 'system' | 'user' | 'assistant';
@@ -92,6 +90,10 @@ export class OpenAIService {
     const startTime = Date.now();
 
     try {
+      if (!openai) {
+        throw new Error('OpenAI API key not configured');
+      }
+
       // Build context-aware system prompt
       const systemPrompt = this.buildSystemPrompt(assistanceType, context);
       

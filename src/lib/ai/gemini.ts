@@ -1,11 +1,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { ChatMessage, AIResponse } from './openai';
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error('Missing GEMINI_API_KEY environment variable');
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = process.env.GEMINI_API_KEY 
+  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
+  : null;
 
 export class GeminiService {
   /**
@@ -25,6 +23,10 @@ export class GeminiService {
     const startTime = Date.now();
 
     try {
+      if (!genAI) {
+        throw new Error('Gemini API key not configured');
+      }
+
       // Choose model based on whether images are present
       const hasImages = messages.some(m => m.images?.length);
       const model = genAI.getGenerativeModel({ 
