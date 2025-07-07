@@ -288,7 +288,7 @@ export const BUBBLE_CONFIG = {
 
 // API endpoints
 export const API_ENDPOINTS = {
-  base: process.env.NODE_ENV === 'development' 
+  base: window.location.hostname === 'localhost' 
     ? 'http://localhost:3000'
     : 'https://bonsaiprepagent.vercel.app',
   

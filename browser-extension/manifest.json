@@ -36,7 +36,6 @@
         "*://*.bluebook.collegeboard.org/*"
       ],
       "js": [
-        "src/assets/lit-core-2.7.4.min.js",
         "src/assets/marked-4.3.0.min.js",
         "src/content/bonsai-injector.js"
       ],
