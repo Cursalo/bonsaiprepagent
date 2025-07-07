@@ -5,8 +5,8 @@ const nextConfig = {
   },
   images: {
     domains: [
-      'bonsai-sat-tutor.vercel.app',
-      'bonsai-sat-tutor-staging.vercel.app',
+      'bonsaiprepagent.vercel.app',
+      'bonsaiprepagent-staging.vercel.app',
       'supabase.co',
       'avatars.githubusercontent.com'
     ],
@@ -47,7 +47,7 @@ const nextConfig = {
         {
           key: 'Access-Control-Allow-Origin',
           value: process.env.NODE_ENV === 'production' 
-            ? 'https://bonsai-sat-tutor.vercel.app' 
+            ? 'https://bonsaiprepagent.vercel.app' 
             : 'http://localhost:3000'
         },
         {

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { FeatureGatingService } from '@/lib/subscription/feature-gating';
+import React from 'react';
+import { Shield } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /**
  * Feature gate middleware for protecting API routes based on subscription tiers
@@ -271,7 +274,3 @@ async function getUpgradeSuggestion(userId: string, feature: string) {
   }
 }
 
-// Import React for the component
-import React from 'react';
-import { Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';

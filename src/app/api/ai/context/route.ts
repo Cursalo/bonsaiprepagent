@@ -11,6 +11,137 @@ interface ContextAnalysisRequest {
   platform?: string;
 }
 
+/**
+ * Fallback analysis using keyword detection
+ */
+function fallbackAnalysis(
+  questionText: string,
+  answerChoices?: string[]
+) {
+  const text = (questionText + ' ' + (answerChoices?.join(' ') || '')).toLowerCase();
+
+  // Determine subject based on keywords
+  let subject = 'general';
+  let difficulty = 'medium';
+  let topics: string[] = [];
+
+  // Math keywords
+  if (text.match(/\b(equation|solve|calculate|algebra|geometry|trigonometry|function|graph|polynomial|derivative|integral|probability|statistics|ratio|proportion|percentage)\b/)) {
+    subject = 'math';
+    if (text.match(/\b(derivative|integral|calculus|limit)\b/)) difficulty = 'hard';
+    if (text.match(/\b(basic|simple|elementary)\b/)) difficulty = 'easy';
+    
+    if (text.includes('algebra')) topics.push('algebra');
+    if (text.includes('geometry')) topics.push('geometry');
+    if (text.includes('statistics')) topics.push('statistics');
+  }
+
+  // Reading keywords
+  else if (text.match(/\b(passage|paragraph|author|tone|main idea|inference|conclusion|evidence|purpose|argument|theme|character|plot)\b/)) {
+    subject = 'reading';
+    if (text.match(/\b(complex|sophisticated|nuanced|implicit)\b/)) difficulty = 'hard';
+    if (text.match(/\b(simple|straightforward|obvious)\b/)) difficulty = 'easy';
+    
+    if (text.includes('main idea')) topics.push('main-idea');
+    if (text.includes('inference')) topics.push('inference');
+    if (text.includes('evidence')) topics.push('evidence-based-reading');
+  }
+
+  // Writing keywords
+  else if (text.match(/\b(grammar|punctuation|sentence|paragraph|transition|revision|edit|comma|semicolon|apostrophe|subject|verb|pronoun)\b/)) {
+    subject = 'writing';
+    if (text.match(/\b(complex|advanced|sophisticated)\b/)) difficulty = 'hard';
+    if (text.match(/\b(basic|simple|elementary)\b/)) difficulty = 'easy';
+    
+    if (text.includes('grammar')) topics.push('grammar');
+    if (text.includes('punctuation')) topics.push('punctuation');
+    if (text.includes('revision')) topics.push('revision');
+  }
+
+  return {
+    subject,
+    difficulty,
+    topics,
+    confidence: 0.6, // Lower confidence for fallback
+    keywords: text.split(' ').filter(word => word.length > 3).slice(0, 10)
+  };
+}
+
+/**
+ * Calculate question complexity based on various factors
+ */
+function calculateComplexity(context: {
+  questionText?: string;
+  answerChoices?: string[];
+  passage?: string;
+}) {
+  let score = 0;
+  
+  // Text length complexity
+  const totalLength = (context.questionText?.length || 0) + 
+                     (context.passage?.length || 0) + 
+                     (context.answerChoices?.join('').length || 0);
+  
+  if (totalLength > 1000) score += 3;
+  else if (totalLength > 500) score += 2;
+  else score += 1;
+  
+  // Answer choice complexity
+  if (context.answerChoices && context.answerChoices.length > 4) score += 1;
+  
+  // Passage complexity
+  if (context.passage) {
+    if (context.passage.length > 500) score += 2;
+    else score += 1;
+  }
+  
+  if (score >= 6) return 'very-hard';
+  if (score >= 4) return 'hard';
+  if (score >= 2) return 'medium';
+  return 'easy';
+}
+
+/**
+ * Generate recommendations based on analysis
+ */
+function generateRecommendations(
+  analysis: any,
+  context: {
+    hasImage: boolean;
+    hasPassage: boolean;
+    platform?: string;
+  }
+) {
+  const recommendations = [];
+  
+  if (analysis.difficulty === 'hard') {
+    recommendations.push('Break down the problem into smaller steps');
+    recommendations.push('Review relevant concepts before attempting');
+  }
+  
+  if (analysis.subject === 'math') {
+    recommendations.push('Show your work step by step');
+    recommendations.push('Double-check your calculations');
+  }
+  
+  if (analysis.subject === 'reading' && context.hasPassage) {
+    recommendations.push('Read the passage carefully before answering');
+    recommendations.push('Look for evidence in the text to support your answer');
+  }
+  
+  if (analysis.subject === 'writing') {
+    recommendations.push('Read the sentence aloud to check for errors');
+    recommendations.push('Consider the context and tone');
+  }
+  
+  if (context.hasImage) {
+    recommendations.push('Examine all parts of the image carefully');
+    recommendations.push('Look for visual clues and patterns');
+  }
+  
+  return recommendations;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ContextAnalysisRequest = await request.json();
@@ -40,7 +171,7 @@ export async function POST(request: NextRequest) {
       console.error('AI analysis failed, using fallback:', error);
       
       // Fallback analysis using simple keyword detection
-      analysis = this.fallbackAnalysis(body.questionText || '', body.answerChoices);
+      analysis = fallbackAnalysis(body.questionText || '', body.answerChoices);
     }
 
     // Enhanced analysis with additional context
@@ -51,12 +182,12 @@ export async function POST(request: NextRequest) {
       hasImage: !!body.questionImage,
       hasPassage: !!body.passage,
       answerChoiceCount: body.answerChoices?.length || 0,
-      complexity: this.calculateComplexity({
+      complexity: calculateComplexity({
         questionText: body.questionText,
         answerChoices: body.answerChoices,
         passage: body.passage,
       }),
-      recommendations: this.generateRecommendations(analysis, {
+      recommendations: generateRecommendations(analysis, {
         hasImage: !!body.questionImage,
         hasPassage: !!body.passage,
         platform: body.platform,
@@ -78,146 +209,5 @@ export async function POST(request: NextRequest) {
       },
       { status: 500 }
     );
-  }
-
-  /**
-   * Fallback analysis using keyword detection
-   */
-  private static fallbackAnalysis(
-    questionText: string,
-    answerChoices?: string[]
-  ) {
-    const text = (questionText + ' ' + (answerChoices?.join(' ') || '')).toLowerCase();
-    
-    let subject: 'math' | 'reading' | 'writing' = 'math';
-    let difficulty: 'easy' | 'medium' | 'hard' = 'medium';
-    const topics: string[] = [];
-    
-    // Subject detection
-    if (text.includes('passage') || text.includes('author') || text.includes('text') || 
-        text.includes('paragraph') || text.includes('reading')) {
-      subject = 'reading';
-      topics.push('reading comprehension');
-    } else if (text.includes('grammar') || text.includes('sentence') || 
-               text.includes('punctuation') || text.includes('verb') || 
-               text.includes('comma') || text.includes('period')) {
-      subject = 'writing';
-      topics.push('grammar');
-    } else if (/\d+|equation|solve|calculate|graph|function|algebra|geometry/.test(text)) {
-      subject = 'math';
-      if (text.includes('algebra') || text.includes('equation')) topics.push('algebra');
-      if (text.includes('geometry') || text.includes('triangle')) topics.push('geometry');
-      if (text.includes('graph') || text.includes('coordinate')) topics.push('coordinate geometry');
-    }
-    
-    // Difficulty estimation
-    const complexWords = text.split(' ').filter(word => word.length > 7).length;
-    const mathSymbols = (text.match(/\^|\*|\/|\+|-|\(|\)|√|π|∞/g) || []).length;
-    
-    if (complexWords > 8 || mathSymbols > 5 || text.length > 500) {
-      difficulty = 'hard';
-    } else if (complexWords > 4 || mathSymbols > 2 || text.length > 200) {
-      difficulty = 'medium';
-    } else {
-      difficulty = 'easy';
-    }
-    
-    // Add basic topics if none detected
-    if (topics.length === 0) {
-      topics.push('general');
-    }
-    
-    return {
-      subject,
-      difficulty,
-      topics,
-      questionType: subject === 'math' ? 'problem solving' : 
-                   subject === 'reading' ? 'comprehension' : 'language usage',
-    };
-  }
-
-  /**
-   * Calculate question complexity score
-   */
-  private static calculateComplexity(content: {
-    questionText?: string;
-    answerChoices?: string[];
-    passage?: string;
-  }): number {
-    let complexity = 0;
-    
-    const allText = [
-      content.questionText || '',
-      ...(content.answerChoices || []),
-      content.passage || ''
-    ].join(' ');
-    
-    // Length factor
-    complexity += Math.min(allText.length / 1000, 1) * 0.3;
-    
-    // Vocabulary complexity
-    const complexWords = allText.split(' ').filter(word => word.length > 8).length;
-    complexity += Math.min(complexWords / 10, 1) * 0.3;
-    
-    // Mathematical complexity
-    const mathSymbols = (allText.match(/\^|\*|\/|\+|-|\(|\)|√|π|∞|∑|∫/g) || []).length;
-    complexity += Math.min(mathSymbols / 10, 1) * 0.2;
-    
-    // Structure complexity
-    if (content.passage) complexity += 0.1;
-    if ((content.answerChoices?.length || 0) > 4) complexity += 0.1;
-    
-    return Math.min(complexity, 1);
-  }
-
-  /**
-   * Generate assistance recommendations
-   */
-  private static generateRecommendations(
-    analysis: any,
-    context: {
-      hasImage: boolean;
-      hasPassage: boolean;
-      platform?: string;
-    }
-  ) {
-    const recommendations = [];
-    
-    // Subject-specific recommendations
-    if (analysis.subject === 'math') {
-      recommendations.push('Consider showing step-by-step solution process');
-      if (context.hasImage) {
-        recommendations.push('Analyze visual elements like graphs or diagrams');
-      }
-    } else if (analysis.subject === 'reading') {
-      recommendations.push('Reference specific parts of the passage');
-      recommendations.push('Focus on evidence-based reasoning');
-      if (context.hasPassage) {
-        recommendations.push('Highlight key textual evidence');
-      }
-    } else if (analysis.subject === 'writing') {
-      recommendations.push('Explain grammar rules clearly');
-      recommendations.push('Provide examples of correct usage');
-    }
-    
-    // Difficulty-based recommendations
-    if (analysis.difficulty === 'hard') {
-      recommendations.push('Break down complex concepts into simpler steps');
-      recommendations.push('Provide multiple approaches to the solution');
-    } else if (analysis.difficulty === 'easy') {
-      recommendations.push('Focus on building confidence');
-      recommendations.push('Connect to fundamental concepts');
-    }
-    
-    // Platform-specific recommendations
-    if (context.platform === 'bluebook') {
-      recommendations.push('Respect official test environment');
-      recommendations.push('Focus on test-taking strategies');
-    } else if (context.platform === 'khan_academy') {
-      recommendations.push('Encourage practice and mastery');
-      recommendations.push('Connect to related Khan Academy resources');
-    }
-    
-    return recommendations;
   }
 }
