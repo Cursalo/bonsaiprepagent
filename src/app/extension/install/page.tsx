@@ -78,10 +78,19 @@ export default function ExtensionInstallPage() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex items-center space-x-2 text-white/60">
                 <AlertCircle className="h-4 w-4" />
-                <span className="text-sm">Extension is pending Chrome Web Store review. Use manual installation below.</span>
+                <span className="text-sm">We're preparing for Chrome Web Store submission. Use the simple manual installation below.</span>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <div className="text-blue-300 text-sm font-medium mb-2">📋 To publish on Chrome Web Store, we need:</div>
+                <div className="text-blue-200/80 text-sm space-y-1">
+                  <div>• $5 developer account registration</div>
+                  <div>• Store listing with screenshots</div>
+                  <div>• 1-3 day review process</div>
+                  <div>• Privacy policy and compliance review</div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -107,28 +116,42 @@ export default function ExtensionInstallPage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-bonsai-gradient rounded-full flex items-center justify-center text-white font-bold text-sm">1</div>
-                  <h4 className="text-white font-semibold">Download Extension Files</h4>
+                  <h4 className="text-white font-semibold">Download Extension (Easy!)</h4>
                 </div>
-                <div className="ml-11 space-y-3">
-                  <p className="text-white/70 text-sm">
-                    Download the extension source code to your computer:
+                <div className="ml-11 space-y-4">
+                  <p className="text-white/70">
+                    📦 <strong>Simplest option:</strong> Download the ready-to-install ZIP file
                   </p>
-                  <div className="bg-black/30 rounded-lg p-4 border border-white/10">
-                    <code className="text-green-400 text-sm font-mono">
-                      git clone https://github.com/Cursalo/bonsaiprepagent.git
-                    </code>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="ml-2 border-white/20 text-white hover:bg-white/10"
-                      onClick={() => copyToClipboard('git clone https://github.com/Cursalo/bonsaiprepagent.git')}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
+                  
+                  <div className="bg-gradient-to-r from-bonsai-500/10 to-blue-500/10 rounded-lg p-4 border border-bonsai-500/30">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-white font-medium">📥 Direct Download</div>
+                        <div className="text-white/70 text-sm">Pre-built extension ready to install</div>
+                      </div>
+                      <Button
+                        className="bg-bonsai-gradient hover:opacity-90"
+                        asChild
+                      >
+                        <Link href="https://github.com/Cursalo/bonsaiprepagent/archive/main.zip" target="_blank" rel="noopener noreferrer">
+                          <Download className="mr-2 h-4 w-4" />
+                          Download ZIP
+                        </Link>
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-white/60 text-xs">
-                    Or download as ZIP: <Link href="https://github.com/Cursalo/bonsaiprepagent/archive/main.zip" className="text-blue-400 hover:underline">bonsaiprepagent-main.zip</Link>
-                  </p>
+
+                  <div className="bg-black/20 rounded-lg p-3 border border-white/10">
+                    <details className="text-white/60">
+                      <summary className="cursor-pointer text-white/80 font-medium">🔧 For Developers: Clone with Git</summary>
+                      <div className="mt-2 space-y-2">
+                        <div className="bg-black/30 rounded p-2 font-mono text-xs text-green-400">
+                          git clone https://github.com/Cursalo/bonsaiprepagent.git
+                        </div>
+                        <p className="text-xs">Use this if you want to modify the extension code</p>
+                      </div>
+                    </details>
+                  </div>
                 </div>
               </div>
 
@@ -136,14 +159,24 @@ export default function ExtensionInstallPage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-bonsai-gradient rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                  <h4 className="text-white font-semibold">Enable Developer Mode in Chrome</h4>
+                  <h4 className="text-white font-semibold">Extract & Open Chrome Extensions</h4>
                 </div>
                 <div className="ml-11 space-y-3">
-                  <ol className="text-white/70 text-sm space-y-2 list-decimal list-inside">
-                    <li>Open Chrome and go to <code className="bg-black/30 px-2 py-1 rounded text-xs">chrome://extensions/</code></li>
-                    <li>Toggle on <strong className="text-white">"Developer mode"</strong> in the top-right corner</li>
-                    <li>You should see new buttons appear: "Load unpacked", "Pack extension", etc.</li>
-                  </ol>
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <div className="text-blue-300 text-sm font-medium mb-2">📂 First, extract the ZIP file:</div>
+                    <div className="text-blue-200/80 text-sm">
+                      Right-click the downloaded ZIP → "Extract All" → Choose a folder you'll remember
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="text-white/80 font-medium text-sm">🔧 Then open Chrome Extensions:</div>
+                    <ol className="text-white/70 text-sm space-y-1 list-decimal list-inside ml-4">
+                      <li>Open Chrome and type <code className="bg-black/30 px-2 py-1 rounded text-xs">chrome://extensions/</code> in the address bar</li>
+                      <li>Toggle on <strong className="text-white">"Developer mode"</strong> in the top-right corner</li>
+                      <li>You'll see new buttons appear: "Load unpacked", "Pack extension", etc.</li>
+                    </ol>
+                  </div>
                 </div>
               </div>
 
@@ -151,15 +184,25 @@ export default function ExtensionInstallPage() {
               <div className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-bonsai-gradient rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
-                  <h4 className="text-white font-semibold">Load the Extension</h4>
+                  <h4 className="text-white font-semibold">Install the Extension</h4>
                 </div>
                 <div className="ml-11 space-y-3">
-                  <ol className="text-white/70 text-sm space-y-2 list-decimal list-inside">
-                    <li>Click <strong className="text-white">"Load unpacked"</strong></li>
-                    <li>Navigate to the downloaded folder and select the <code className="bg-black/30 px-2 py-1 rounded text-xs">browser-extension</code> folder</li>
-                    <li>Click <strong className="text-white">"Select Folder"</strong></li>
-                    <li>The Bonsai extension should now appear in your extensions list!</li>
-                  </ol>
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+                    <div className="text-green-300 text-sm font-medium mb-2">🎯 Almost there! Just click and select:</div>
+                    <ol className="text-green-200/80 text-sm space-y-1 list-decimal list-inside">
+                      <li>Click <strong className="text-white">"Load unpacked"</strong> button</li>
+                      <li>Browse to your extracted folder</li>
+                      <li>Select the <code className="bg-black/30 px-2 py-1 rounded text-xs">browser-extension</code> folder</li>
+                      <li>Click <strong className="text-white">"Select Folder"</strong></li>
+                    </ol>
+                  </div>
+                  
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+                    <div className="text-purple-300 text-sm font-medium mb-1">✨ Success!</div>
+                    <div className="text-purple-200/80 text-sm">
+                      The Bonsai extension should now appear in your extensions list with a green toggle switch!
+                    </div>
+                  </div>
                 </div>
               </div>
 
