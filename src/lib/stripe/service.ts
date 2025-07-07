@@ -1,5 +1,4 @@
 import { stripe, SUBSCRIPTION_TIERS, getSubscriptionTier, type SubscriptionTier } from './config';
-import { supabase } from '@/lib/supabase/client';
 import { createClient } from '@supabase/supabase-js';
 
 // Admin client for server-side operations
@@ -373,7 +372,6 @@ export class StripeService {
           [`${usageType}_count`]: amount,
         }, {
           onConflict: 'user_id,date',
-          update: [`${usageType}_count`],
         });
 
     } catch (error) {

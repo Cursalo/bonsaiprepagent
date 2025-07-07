@@ -146,7 +146,7 @@ export function getTierLimits(tier: SubscriptionTier) {
 }
 
 export function canUseFeature(userTier: SubscriptionTier, feature: keyof typeof SUBSCRIPTION_TIERS.free.features): boolean {
-  return SUBSCRIPTION_TIERS[userTier].features[feature];
+  return Boolean(SUBSCRIPTION_TIERS[userTier].features[feature]);
 }
 
 export function checkUsageLimit(
