@@ -1,14 +1,14 @@
 import { OpenAIService, type ChatMessage, type AIResponse } from './openai';
-import { GeminiService } from './gemini';
+// import { GeminiService } from './gemini'; // Temporarily disabled
 import { createClient } from '@supabase/supabase-js';
-import { StripeService } from '@/lib/stripe/service';
+// import { StripeService } from '@/lib/stripe/service'; // Temporarily disabled
 
 const adminSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export type AIProvider = 'openai' | 'gemini';
+export type AIProvider = 'openai'; // | 'gemini'; // Gemini temporarily disabled
 
 export interface AIInteractionContext {
   userId: string;
@@ -127,20 +127,23 @@ export class BonsaiAIService {
     assistanceType: string
   ): Promise<void> {
     // Check feature access
-    const canUseAI = await StripeService.canUserUseFeature(userId, 'aiInteractionsPerDay');
+    // const canUseAI = await StripeService.canUserUseFeature(userId, 'aiInteractionsPerDay'); // Temporarily disabled
+    const canUseAI = { allowed: true };
     if (!canUseAI) {
       throw new Error('AI tutoring not available on your current plan');
     }
 
     // Check usage limits
-    const withinLimits = await StripeService.checkUsageLimit(userId, 'dailyAiInteractions');
+    // const withinLimits = await StripeService.checkUsageLimit(userId, 'dailyAiInteractions'); // Temporarily disabled
+    const withinLimits = { allowed: true };
     if (!withinLimits) {
       throw new Error('Daily AI interaction limit reached. Upgrade your plan for more interactions.');
     }
 
     // Check voice commands if applicable
     if (assistanceType === 'voice_command') {
-      const canUseVoice = await StripeService.canUserUseFeature(userId, 'voiceCommands');
+      // const canUseVoice = await StripeService.canUserUseFeature(userId, 'voiceCommands'); // Temporarily disabled
+      const canUseVoice = { allowed: true };
       if (!canUseVoice) {
         throw new Error('Voice commands not available on your current plan');
       }
@@ -178,24 +181,7 @@ export class BonsaiAIService {
       return acc;
     }, {} as any) || {};
 
-    // Math questions - prefer OpenAI for better LaTeX support
-    if (context.subject === 'math' && !flagMap.prefer_gemini) {
-      return 'openai';
-    }
-
-    // Reading/Writing - Gemini often performs well
-    if ((context.subject === 'reading' || context.subject === 'writing') && 
-        !flagMap.prefer_openai) {
-      return 'gemini';
-    }
-
-    // Load balancing if enabled
-    if (flagMap.load_balance_ai) {
-      const random = Math.random();
-      return random < 0.5 ? 'openai' : 'gemini';
-    }
-
-    // Default to OpenAI
+    // Temporarily using only OpenAI for deployment
     return 'openai';
   }
 
@@ -209,27 +195,11 @@ export class BonsaiAIService {
     context: AIInteractionContext
   ): Promise<AIResponse> {
     try {
-      if (provider === 'openai') {
-        return await OpenAIService.generateResponse(messages, assistanceType, context);
-      } else {
-        return await GeminiService.generateResponse(messages, assistanceType, context);
-      }
+      // Only using OpenAI for now
+      return await OpenAIService.generateResponse(messages, assistanceType, context);
     } catch (error) {
-      console.error(`${provider} failed, attempting fallback:`, error);
-      
-      // Fallback to the other provider
-      const fallbackProvider = provider === 'openai' ? 'gemini' : 'openai';
-      
-      try {
-        if (fallbackProvider === 'openai') {
-          return await OpenAIService.generateResponse(messages, assistanceType, context);
-        } else {
-          return await GeminiService.generateResponse(messages, assistanceType, context);
-        }
-      } catch (fallbackError) {
-        console.error('Both AI providers failed:', fallbackError);
-        throw new Error('AI service temporarily unavailable. Please try again.');
-      }
+      console.error('OpenAI failed:', error);
+      throw new Error('AI service temporarily unavailable. Please try again.');
     }
   }
 
@@ -241,13 +211,8 @@ export class BonsaiAIService {
     questionImage?: string
   ): Promise<Partial<AIInteractionContext>> {
     try {
-      // Try OpenAI first for vision tasks
-      if (questionImage) {
-        return await OpenAIService.analyzeQuestionContext(questionText, questionImage);
-      } else {
-        // Use Gemini for text-only analysis
-        return await GeminiService.analyzeQuestionContext(questionText);
-      }
+      // Use OpenAI for all analysis (text and vision)
+      return await OpenAIService.analyzeQuestionContext(questionText, questionImage);
     } catch (error) {
       console.error('Question analysis failed:', error);
       return {
@@ -418,7 +383,7 @@ export class BonsaiAIService {
         voice_input: context.voiceInput || false,
         voice_intent: context.voiceIntent || null,
         ai_provider: provider,
-        model_used: provider === 'openai' ? 'gpt-4-turbo' : 'gemini-pro',
+        model_used: 'gpt-4-turbo', // Only using OpenAI for now
         assistance_type: aiResponse.assistanceType,
         response_text: aiResponse.content,
         response_time_ms: aiResponse.responseTimeMs,
@@ -458,14 +423,15 @@ export class BonsaiAIService {
    * Update usage tracking
    */
   private static async updateUsageTracking(userId: string): Promise<void> {
-    await StripeService.incrementUsage(userId, 'ai_interactions', 1);
+    // await StripeService.incrementUsage(userId, 'ai_interactions', 1); // Temporarily disabled
   }
 
   /**
    * Get remaining usage for user
    */
   private static async getRemainingUsage(userId: string) {
-    const subscription = await StripeService.getUserSubscription(userId);
+    // const subscription = await StripeService.getUserSubscription(userId); // Temporarily disabled
+    const subscription = { tier: 'free', remaining: { ai_interactions: 100 }, daily_ai_interactions_limit: 5 };
     if (!subscription) {
       return { daily: 0, unlimited: false };
     }

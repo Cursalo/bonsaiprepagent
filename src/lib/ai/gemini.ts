@@ -1,9 +1,7 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+// Gemini temporarily disabled for deployment
 import type { ChatMessage, AIResponse } from './openai';
 
-const genAI = process.env.GEMINI_API_KEY 
-  ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
-  : null;
+const genAI = null;
 
 export class GeminiService {
   /**
