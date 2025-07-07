@@ -110,13 +110,16 @@
     function createBonsaiContainer() {
         console.log('Bonsai SAT: Creating container...');
         
+        // Get saved position or use default
+        const savedPosition = JSON.parse(localStorage.getItem('bonsai-position') || '{"top": 20, "right": 20}');
+        
         // Create the floating container for Bonsai assistant
         const container = document.createElement('div');
         container.id = 'bonsai-sat-container';
         container.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: ${savedPosition.top}px;
+            right: ${savedPosition.right}px;
             width: 380px;
             max-height: 600px;
             z-index: 999999;
@@ -131,7 +134,33 @@
             transform: translateX(100%);
             transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
             overflow: hidden;
+            cursor: move;
         `;
+
+        // Add drag handle
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'bonsai-drag-handle';
+        dragHandle.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 12px;
+            font-weight: 500;
+            user-select: none;
+            border-radius: 12px 12px 0 0;
+        `;
+        dragHandle.innerHTML = '⋮⋮⋮ Drag to move';
+        
+        container.appendChild(dragHandle);
 
         // Create the app instance
         console.log('Bonsai SAT: Creating app element...');
@@ -146,6 +175,8 @@
             min-height: 200px;
             color: #e5e5e7;
             background: transparent;
+            margin-top: 40px;
+            cursor: default;
         `;
         
         // Add fallback content in case the component doesn't load
@@ -158,6 +189,9 @@
         `;
         
         container.appendChild(app);
+        
+        // Add drag functionality
+        setupDragFunctionality(container, dragHandle);
         
         // Add to body with error handling
         try {
@@ -175,6 +209,95 @@
         }, 500);
 
         return { container, app };
+    }
+
+    function setupDragFunctionality(container, dragHandle) {
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+
+        function dragStart(e) {
+            if (e.type === "touchstart") {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+
+            if (e.target === dragHandle || dragHandle.contains(e.target)) {
+                isDragging = true;
+                container.style.transition = 'none';
+            }
+        }
+
+        function dragEnd(e) {
+            if (isDragging) {
+                isDragging = false;
+                container.style.transition = 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
+                
+                // Save position to localStorage
+                const rect = container.getBoundingClientRect();
+                const position = {
+                    top: rect.top,
+                    right: window.innerWidth - rect.right
+                };
+                localStorage.setItem('bonsai-position', JSON.stringify(position));
+            }
+        }
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                if (e.type === "touchmove") {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+
+                xOffset = currentX;
+                yOffset = currentY;
+
+                // Calculate new position
+                const rect = container.getBoundingClientRect();
+                let newTop = rect.top + currentY;
+                let newLeft = rect.left + currentX;
+
+                // Constrain to viewport
+                const maxTop = window.innerHeight - rect.height;
+                const maxLeft = window.innerWidth - rect.width;
+                
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+
+                container.style.top = `${newTop}px`;
+                container.style.left = `${newLeft}px`;
+                container.style.right = 'auto';
+                
+                // Reset offset for next calculation
+                xOffset = 0;
+                yOffset = 0;
+                initialX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
+                initialY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
+            }
+        }
+
+        // Add event listeners
+        dragHandle.addEventListener("mousedown", dragStart, false);
+        document.addEventListener("mouseup", dragEnd, false);
+        document.addEventListener("mousemove", drag, false);
+
+        // Touch events for mobile
+        dragHandle.addEventListener("touchstart", dragStart, false);
+        document.addEventListener("touchend", dragEnd, false);
+        document.addEventListener("touchmove", drag, false);
     }
 
     function initializePlatformFeatures(platform) {

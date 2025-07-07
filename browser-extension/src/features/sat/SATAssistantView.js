@@ -1,4 +1,5 @@
 import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
+import apiClient from '../../lib/api-client.js';
 
 export class SATAssistantView extends LitElement {
     static styles = css`
@@ -322,6 +323,21 @@ export class SATAssistantView extends LitElement {
             background: #059669;
         }
 
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .action-button:disabled:hover {
+            background: var(--button-background);
+            border-color: var(--button-border);
+        }
+
+        .action-button.primary:disabled:hover {
+            background: var(--bonsai-primary);
+        }
+
         .loading-state {
             display: flex;
             align-items: center;
@@ -373,6 +389,73 @@ export class SATAssistantView extends LitElement {
             color: rgba(255, 255, 255, 0.7);
             margin-top: 2px;
         }
+
+        .ai-response {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 8px 0;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .ai-response.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .ai-response.fallback {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+
+        .ai-response-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .ai-icon {
+            font-size: 14px;
+        }
+
+        .ai-label {
+            color: var(--bonsai-primary);
+        }
+
+        .error-badge {
+            color: #fca5a5;
+            font-size: 10px;
+        }
+
+        .ai-response-content {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-color);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ai-response-timestamp {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            text-align: right;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     `;
 
     static properties = {
@@ -384,7 +467,9 @@ export class SATAssistantView extends LitElement {
         currentQuestion: { type: Object },
         practiceStats: { type: Object },
         isLoading: { type: Boolean },
-        collapsedSections: { type: Array }
+        collapsedSections: { type: Array },
+        aiResponse: { type: Object },
+        aiAnalyzing: { type: Boolean }
     };
 
     constructor() {
@@ -409,6 +494,8 @@ export class SATAssistantView extends LitElement {
         };
         this.isLoading = false;
         this.collapsedSections = [];
+        this.aiResponse = null;
+        this.aiAnalyzing = false;
     }
 
     connectedCallback() {
@@ -437,44 +524,135 @@ export class SATAssistantView extends LitElement {
         }));
     }
 
-    handleGetHint() {
+    async handleGetHint() {
+        if (!this.currentQuestion) return;
+        
+        this.aiAnalyzing = true;
         this.isLoading = true;
         
-        // Simulate AI processing
-        setTimeout(() => {
-            this.isLoading = false;
-            // Add hint to current question analysis
-            if (this.currentQuestion) {
-                this.dispatchEvent(new CustomEvent('hint-requested', {
-                    detail: { question: this.currentQuestion },
-                    bubbles: true
-                }));
+        try {
+            const response = await apiClient.analyzeQuestionWithAI(this.currentQuestion, {
+                assistanceType: 'hint',
+                userLevel: this.selectedDifficulty
+            });
+            
+            if (response.success) {
+                this.aiResponse = {
+                    type: 'hint',
+                    content: response.response,
+                    timestamp: Date.now()
+                };
+                
+                // Track usage
+                chrome.runtime.sendMessage({
+                    action: 'helpRequested',
+                    platform: this.selectedPlatform,
+                    questionType: this.currentQuestion.type,
+                    helpType: 'hint'
+                });
+            } else {
+                this.aiResponse = {
+                    type: 'hint',
+                    content: response.fallback,
+                    timestamp: Date.now(),
+                    isFallback: true
+                };
             }
-        }, 1500);
+        } catch (error) {
+            console.error('AI hint error:', error);
+            this.aiResponse = {
+                type: 'hint',
+                content: 'Try breaking down the question step by step. What is the question asking for? What information do you have?',
+                timestamp: Date.now(),
+                isError: true
+            };
+        } finally {
+            this.aiAnalyzing = false;
+            this.isLoading = false;
+            this.requestUpdate();
+        }
     }
 
-    handleExplainConcept() {
+    async handleExplainConcept() {
+        if (!this.currentQuestion) return;
+        
+        this.aiAnalyzing = true;
         this.isLoading = true;
         
-        setTimeout(() => {
+        try {
+            const response = await apiClient.analyzeQuestionWithAI(this.currentQuestion, {
+                assistanceType: 'concept_explanation',
+                userLevel: this.selectedDifficulty
+            });
+            
+            if (response.success) {
+                this.aiResponse = {
+                    type: 'concept',
+                    content: response.response,
+                    timestamp: Date.now()
+                };
+            } else {
+                this.aiResponse = {
+                    type: 'concept',
+                    content: response.fallback,
+                    timestamp: Date.now(),
+                    isFallback: true
+                };
+            }
+        } catch (error) {
+            console.error('AI concept explanation error:', error);
+            this.aiResponse = {
+                type: 'concept',
+                content: `This question tests ${this.currentQuestion.subject} concepts. Focus on understanding the fundamental principles before attempting to solve.`,
+                timestamp: Date.now(),
+                isError: true
+            };
+        } finally {
+            this.aiAnalyzing = false;
             this.isLoading = false;
-            this.dispatchEvent(new CustomEvent('concept-explanation-requested', {
-                detail: { question: this.currentQuestion },
-                bubbles: true
-            }));
-        }, 2000);
+            this.requestUpdate();
+        }
     }
 
-    handleShowSolution() {
+    async handleShowSolution() {
+        if (!this.currentQuestion) return;
+        
+        this.aiAnalyzing = true;
         this.isLoading = true;
         
-        setTimeout(() => {
+        try {
+            const response = await apiClient.analyzeQuestionWithAI(this.currentQuestion, {
+                assistanceType: 'solution_guide',
+                userLevel: this.selectedDifficulty
+            });
+            
+            if (response.success) {
+                this.aiResponse = {
+                    type: 'solution',
+                    content: response.response,
+                    timestamp: Date.now()
+                };
+            } else {
+                this.aiResponse = {
+                    type: 'solution',
+                    content: response.fallback,
+                    timestamp: Date.now(),
+                    isFallback: true
+                };
+            }
+        } catch (error) {
+            console.error('AI solution error:', error);
+            this.aiResponse = {
+                type: 'solution',
+                content: 'Work through this systematically: 1) Understand what\'s being asked, 2) Identify relevant information, 3) Apply the appropriate method, 4) Check your answer.',
+                timestamp: Date.now(),
+                isError: true
+            };
+        } finally {
+            this.aiAnalyzing = false;
             this.isLoading = false;
-            this.dispatchEvent(new CustomEvent('solution-requested', {
-                detail: { question: this.currentQuestion },
-                bubbles: true
-            }));
-        }, 2500);
+            this.requestUpdate();
+        }
     }
 
     handlePracticeMore() {
@@ -576,6 +754,7 @@ export class SATAssistantView extends LitElement {
 
     renderHintsSection() {
         const isCollapsed = this.collapsedSections.includes('hints');
+        const hasAIHint = this.aiResponse && this.aiResponse.type === 'hint';
         
         return html`
             <div class="help-section ${isCollapsed ? 'collapsed' : ''}">
@@ -584,20 +763,36 @@ export class SATAssistantView extends LitElement {
                     <div class="help-section-icon">▼</div>
                 </div>
                 <div class="help-section-content">
-                    <ul class="hint-list">
-                        <li class="hint-item">
-                            <span class="hint-icon">•</span>
-                            <span>Start by identifying what the question is asking for</span>
-                        </li>
-                        <li class="hint-item">
-                            <span class="hint-icon">•</span>
-                            <span>Look for key words that indicate the approach needed</span>
-                        </li>
-                        <li class="hint-item">
-                            <span class="hint-icon">•</span>
-                            <span>Consider what information is given vs. what you need to find</span>
-                        </li>
-                    </ul>
+                    ${hasAIHint ? html`
+                        <div class="ai-response ${'hint'} ${this.aiResponse.isError ? 'error' : ''} ${this.aiResponse.isFallback ? 'fallback' : ''}">
+                            <div class="ai-response-header">
+                                <span class="ai-icon">🤖</span>
+                                <span class="ai-label">${this.aiResponse.isError ? 'Fallback Hint' : this.aiResponse.isFallback ? 'Quick Hint' : 'AI Hint'}</span>
+                                ${this.aiResponse.isError ? html`<span class="error-badge">⚠️</span>` : ''}
+                            </div>
+                            <div class="ai-response-content">
+                                ${this.aiResponse.content}
+                            </div>
+                            <div class="ai-response-timestamp">
+                                ${new Date(this.aiResponse.timestamp).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    ` : html`
+                        <ul class="hint-list">
+                            <li class="hint-item">
+                                <span class="hint-icon">•</span>
+                                <span>Start by identifying what the question is asking for</span>
+                            </li>
+                            <li class="hint-item">
+                                <span class="hint-icon">•</span>
+                                <span>Look for key words that indicate the approach needed</span>
+                            </li>
+                            <li class="hint-item">
+                                <span class="hint-icon">•</span>
+                                <span>Consider what information is given vs. what you need to find</span>
+                            </li>
+                        </ul>
+                    `}
                 </div>
             </div>
         `;
@@ -605,6 +800,7 @@ export class SATAssistantView extends LitElement {
 
     renderConceptSection() {
         const isCollapsed = this.collapsedSections.includes('concepts');
+        const hasAIConcept = this.aiResponse && this.aiResponse.type === 'concept';
         
         return html`
             <div class="help-section ${isCollapsed ? 'collapsed' : ''}">
@@ -613,7 +809,23 @@ export class SATAssistantView extends LitElement {
                     <div class="help-section-icon">▼</div>
                 </div>
                 <div class="help-section-content">
-                    <p>Understanding the fundamental concepts behind this type of question will help you solve similar problems in the future.</p>
+                    ${hasAIConcept ? html`
+                        <div class="ai-response ${'concept'} ${this.aiResponse.isError ? 'error' : ''} ${this.aiResponse.isFallback ? 'fallback' : ''}">
+                            <div class="ai-response-header">
+                                <span class="ai-icon">🤖</span>
+                                <span class="ai-label">${this.aiResponse.isError ? 'Fallback Concept' : this.aiResponse.isFallback ? 'Basic Concept' : 'AI Concept Explanation'}</span>
+                                ${this.aiResponse.isError ? html`<span class="error-badge">⚠️</span>` : ''}
+                            </div>
+                            <div class="ai-response-content">
+                                ${this.aiResponse.content}
+                            </div>
+                            <div class="ai-response-timestamp">
+                                ${new Date(this.aiResponse.timestamp).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    ` : html`
+                        <p>Understanding the fundamental concepts behind this type of question will help you solve similar problems in the future.</p>
+                    `}
                 </div>
             </div>
         `;
@@ -621,6 +833,7 @@ export class SATAssistantView extends LitElement {
 
     renderSolutionSection() {
         const isCollapsed = this.collapsedSections.includes('solution');
+        const hasAISolution = this.aiResponse && this.aiResponse.type === 'solution';
         
         return html`
             <div class="help-section ${isCollapsed ? 'collapsed' : ''}">
@@ -629,13 +842,29 @@ export class SATAssistantView extends LitElement {
                     <div class="help-section-icon">▼</div>
                 </div>
                 <div class="help-section-content">
-                    <div class="step-by-step">
-                        <div class="step-item">Read the question carefully and identify what's being asked</div>
-                        <div class="step-item">Identify the given information and variables</div>
-                        <div class="step-item">Choose the appropriate method or formula</div>
-                        <div class="step-item">Solve step by step, showing your work</div>
-                        <div class="step-item">Check your answer and make sure it makes sense</div>
-                    </div>
+                    ${hasAISolution ? html`
+                        <div class="ai-response ${'solution'} ${this.aiResponse.isError ? 'error' : ''} ${this.aiResponse.isFallback ? 'fallback' : ''}">
+                            <div class="ai-response-header">
+                                <span class="ai-icon">🤖</span>
+                                <span class="ai-label">${this.aiResponse.isError ? 'Fallback Solution' : this.aiResponse.isFallback ? 'Basic Approach' : 'AI Solution Guide'}</span>
+                                ${this.aiResponse.isError ? html`<span class="error-badge">⚠️</span>` : ''}
+                            </div>
+                            <div class="ai-response-content">
+                                ${this.aiResponse.content}
+                            </div>
+                            <div class="ai-response-timestamp">
+                                ${new Date(this.aiResponse.timestamp).toLocaleTimeString()}
+                            </div>
+                        </div>
+                    ` : html`
+                        <div class="step-by-step">
+                            <div class="step-item">Read the question carefully and identify what's being asked</div>
+                            <div class="step-item">Identify the given information and variables</div>
+                            <div class="step-item">Choose the appropriate method or formula</div>
+                            <div class="step-item">Solve step by step, showing your work</div>
+                            <div class="step-item">Check your answer and make sure it makes sense</div>
+                        </div>
+                    `}
                 </div>
             </div>
         `;
@@ -672,23 +901,23 @@ export class SATAssistantView extends LitElement {
             return html`
                 <div class="loading-state">
                     <div class="loading-spinner"></div>
-                    <span>Analyzing question...</span>
+                    <span>${this.aiAnalyzing ? 'AI is thinking...' : 'Analyzing question...'}</span>
                 </div>
             `;
         }
 
         return html`
             <div class="assistant-actions">
-                <button class="action-button primary" @click=${this.handleGetHint}>
-                    💡 Get Hint
+                <button class="action-button primary" @click=${this.handleGetHint} ?disabled=${this.aiAnalyzing}>
+                    💡 ${this.aiAnalyzing && this.aiResponse?.type === 'hint' ? 'Getting Hint...' : 'Get Hint'}
                 </button>
-                <button class="action-button" @click=${this.handleExplainConcept}>
-                    🧠 Explain Concept
+                <button class="action-button" @click=${this.handleExplainConcept} ?disabled=${this.aiAnalyzing}>
+                    🧠 ${this.aiAnalyzing && this.aiResponse?.type === 'concept' ? 'Explaining...' : 'Explain Concept'}
                 </button>
-                <button class="action-button" @click=${this.handleShowSolution}>
-                    📝 Show Solution
+                <button class="action-button" @click=${this.handleShowSolution} ?disabled=${this.aiAnalyzing}>
+                    📝 ${this.aiAnalyzing && this.aiResponse?.type === 'solution' ? 'Solving...' : 'Show Solution'}
                 </button>
-                <button class="action-button" @click=${this.handlePracticeMore}>
+                <button class="action-button" @click=${this.handlePracticeMore} ?disabled=${this.aiAnalyzing}>
                     🎯 Practice More
                 </button>
             </div>

@@ -1,4 +1,4 @@
-// API client for communicating with Bonsai SAT Prep backend
+// API client for communicating with Bonsai SAT Prep backend and OpenAI
 
 import { API_ENDPOINTS, ERROR_TYPES, MESSAGE_TYPES } from './constants.js';
 import { Storage, ErrorHandler } from './utils.js';
@@ -6,6 +6,7 @@ import { Storage, ErrorHandler } from './utils.js';
 class BonsaiAPIClient {
   constructor() {
     this.baseURL = API_ENDPOINTS.base;
+    this.openAIKey = null;
     this.authToken = null;
     this.initialized = false;
   }
@@ -17,11 +18,46 @@ class BonsaiAPIClient {
     if (this.initialized) return;
     
     try {
-      // Get stored auth token
+      // Get stored auth token and OpenAI key
       this.authToken = await Storage.get('auth_token');
+      this.openAIKey = await this.getOpenAIKey();
       this.initialized = true;
+      console.log('Bonsai API Client initialized');
     } catch (error) {
       await ErrorHandler.handleError(error, 'API client initialization');
+    }
+  }
+
+  /**
+   * Get OpenAI API key from backend or settings
+   */
+  async getOpenAIKey() {
+    try {
+      // First try to get from backend
+      const response = await chrome.runtime.sendMessage({
+        action: 'getApiKey'
+      });
+
+      if (response.success && response.apiKey) {
+        return response.apiKey;
+      }
+
+      // Fallback: Check for stored key in Chrome storage
+      try {
+        const result = await chrome.storage.sync.get(['openai_api_key']);
+        if (result.openai_api_key) {
+          return result.openai_api_key;
+        }
+      } catch (storageError) {
+        console.warn('Failed to access Chrome storage:', storageError);
+      }
+      
+      // Final fallback - this should be set via extension options
+      console.warn('No OpenAI API key found. Please configure in extension settings.');
+      return null;
+    } catch (error) {
+      console.error('Failed to get OpenAI key:', error);
+      return null;
     }
   }
 
@@ -404,6 +440,119 @@ class BonsaiAPIClient {
         { showToUser: true }
       );
     }
+  }
+
+  /**
+   * Make OpenAI API request for SAT question analysis
+   */
+  async analyzeQuestionWithAI(questionData, context = {}) {
+    try {
+      if (!this.openAIKey) {
+        throw new Error('OpenAI API key not available');
+      }
+
+      const prompt = this.buildSATPrompt(questionData, context);
+      
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.openAIKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4',
+          messages: [
+            {
+              role: 'system',
+              content: 'You are Bonsai, an expert SAT tutor. Provide helpful, encouraging guidance to help students understand SAT questions without giving away the answer directly. Focus on teaching concepts and problem-solving strategies.'
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`OpenAI API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        success: true,
+        response: data.choices[0].message.content,
+        usage: data.usage
+      };
+
+    } catch (error) {
+      console.error('OpenAI API error:', error);
+      return {
+        success: false,
+        error: error.message,
+        fallback: this.generateFallbackResponse(questionData)
+      };
+    }
+  }
+
+  /**
+   * Build SAT-specific prompt for AI analysis
+   */
+  buildSATPrompt(questionData, context) {
+    const { subject, type, difficulty, text, choices } = questionData;
+    
+    let prompt = `Please help me understand this SAT ${subject} question:\n\n`;
+    prompt += `Question: ${text}\n\n`;
+    
+    if (choices && choices.length > 0) {
+      prompt += `Answer choices:\n`;
+      choices.forEach(choice => {
+        prompt += `${choice.label}. ${choice.text}\n`;
+      });
+      prompt += '\n';
+    }
+
+    prompt += `Please provide:\n`;
+    prompt += `1. Key concepts being tested\n`;
+    prompt += `2. A hint to get me started (don't give the answer)\n`;
+    prompt += `3. The general approach or strategy\n`;
+    prompt += `4. Common mistakes to avoid\n\n`;
+    
+    if (context.userLevel) {
+      prompt += `Student level: ${context.userLevel}\n`;
+    }
+    
+    prompt += `Please be encouraging and educational rather than just giving the answer.`;
+    
+    return prompt;
+  }
+
+  /**
+   * Generate fallback response when AI is unavailable
+   */
+  generateFallbackResponse(questionData) {
+    const { subject, type } = questionData;
+    
+    const fallbacks = {
+      math: {
+        'multiple-choice': 'This is a multiple-choice math question. Try breaking it down step by step: 1) Identify what the question is asking, 2) Look for key information, 3) Consider which math concepts apply, 4) Work through the problem systematically.',
+        'grid-in': 'This is a student-produced response question. Make sure to: 1) Read carefully what the question asks, 2) Show your work, 3) Double-check your calculations, 4) Enter your answer in the correct format.',
+        'default': 'For math questions, start by identifying the key concepts and information given. Work step by step and check your answer.'
+      },
+      reading: {
+        'multiple-choice': 'For reading questions: 1) Read the passage carefully, 2) Identify the main idea, 3) Look for evidence in the text, 4) Eliminate obviously wrong answers, 5) Choose the best supported option.',
+        'default': 'Reading comprehension questions require careful analysis of the passage. Look for evidence that supports your answer choice.'
+      },
+      writing: {
+        'multiple-choice': 'For writing questions: 1) Read the sentence in context, 2) Check for grammar, punctuation, and style issues, 3) Consider clarity and conciseness, 4) Choose the most effective option.',
+        'default': 'Writing questions test grammar, style, and clarity. Read each option carefully and choose the most effective version.'
+      }
+    };
+
+    const subjectFallbacks = fallbacks[subject] || {};
+    return subjectFallbacks[type] || subjectFallbacks['default'] || 'Take your time to read the question carefully and consider what concepts are being tested.';
   }
 }
 
