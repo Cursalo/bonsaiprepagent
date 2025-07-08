@@ -4,7 +4,7 @@
 const { app, BrowserWindow, screen, ipcMain, globalShortcut, Menu } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
-const BehaviorTracker = require('./behavior-tracker');
+const SimpleBehaviorTracker = require('./simple-behavior-tracker');
 const AdvancedAIService = require('./advanced-ai-service');
 
 // Configuration
@@ -39,7 +39,7 @@ class BonsaiTutorV2 {
     console.log('🌱 Bonsai SAT Tutor v2: Initializing Glass-inspired assistant...');
     
     // Initialize advanced services
-    this.behaviorTracker = new BehaviorTracker(store);
+    this.behaviorTracker = new SimpleBehaviorTracker(store);
     this.aiService = new AdvancedAIService(store);
     
     // Initialize AI service

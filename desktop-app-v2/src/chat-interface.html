@@ -656,9 +656,9 @@
 
         function openAdvancedSettings() {
             const settingsModal = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="closeModal(event)">
+                <div id="settingsModal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; align-items: center; justify-content: center;" onclick="closeModal(event)">
                     <div style="background: #1e293b; border-radius: 16px; padding: 24px; max-width: 400px; width: 90%; max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
-                        <h3 style="margin: 0 0 16px 0; color: #22c55e;">Advanced Settings</h3>
+                        <h3 style="margin: 0 0 16px 0; color: #22c55e;">Settings</h3>
                         
                         <div style="margin-bottom: 16px;">
                             <label style="display: block; margin-bottom: 8px; font-size: 14px;">OpenAI API Key:</label>
@@ -745,7 +745,7 @@
         
         function closeModal(event) {
             if (event && event.target !== event.currentTarget) return;
-            const modal = document.querySelector('div[style*="position: fixed"]');
+            const modal = document.getElementById('settingsModal');
             if (modal) modal.remove();
         }
         
