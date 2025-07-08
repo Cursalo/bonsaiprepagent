@@ -95,11 +95,60 @@
             border: 2px solid white;
             border-radius: 50%;
             animation: blink 2s infinite;
+            transition: all 0.3s ease;
+        }
+        
+        .status-indicator.struggle {
+            background: #f59e0b;
+            animation: pulse-urgent 1s infinite;
+        }
+        
+        .status-indicator.help-available {
+            background: #3b82f6;
+            animation: pulse-gentle 3s infinite;
+        }
+        
+        .status-indicator.proactive {
+            background: #ef4444;
+            animation: pulse-urgent 0.5s infinite;
         }
 
         @keyframes blink {
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0.3; }
+        }
+        
+        @keyframes pulse-urgent {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes pulse-gentle {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .proactive-message {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .proactive-message.show {
+            opacity: 1;
         }
     </style>
 </head>
@@ -107,8 +156,9 @@
     <div class="floating-button" onclick="openChat()">
         <div class="pulse-ring"></div>
         <div class="bonsai-icon">🌱</div>
-        <div class="status-indicator"></div>
-        <div class="tooltip">Click for SAT Help</div>
+        <div class="status-indicator" id="statusIndicator"></div>
+        <div class="tooltip" id="tooltip">Click for SAT Help</div>
+        <div class="proactive-message" id="proactiveMessage">Need help?</div>
     </div>
 
     <script>
@@ -118,12 +168,67 @@
 
         // Add smooth animations
         const button = document.querySelector('.floating-button');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const tooltip = document.getElementById('tooltip');
+        const proactiveMessage = document.getElementById('proactiveMessage');
         
         // Entrance animation
         setTimeout(() => {
             button.style.opacity = '1';
             button.style.transform = 'scale(1)';
         }, 100);
+        
+        // Listen for advanced indicators
+        window.bonsaiAPI.onStruggleIndicator((event, struggleType) => {
+            statusIndicator.className = 'status-indicator struggle';
+            tooltip.textContent = `Detected: ${struggleType} - Click for help`;
+            
+            // Reset after 30 seconds
+            setTimeout(() => {
+                statusIndicator.className = 'status-indicator';
+                tooltip.textContent = 'Click for SAT Help';
+            }, 30000);
+        });
+        
+        window.bonsaiAPI.onHelpAvailable((event) => {
+            statusIndicator.className = 'status-indicator help-available';
+            tooltip.textContent = 'Help is available - Click to chat';
+            
+            setTimeout(() => {
+                statusIndicator.className = 'status-indicator';
+                tooltip.textContent = 'Click for SAT Help';
+            }, 60000);
+        });
+        
+        window.bonsaiAPI.onProactiveOffer((event, data) => {
+            statusIndicator.className = 'status-indicator proactive';
+            tooltip.textContent = 'I can help with this!';
+            proactiveMessage.textContent = 'Need help?';
+            proactiveMessage.classList.add('show');
+            
+            setTimeout(() => {
+                statusIndicator.className = 'status-indicator';
+                tooltip.textContent = 'Click for SAT Help';
+                proactiveMessage.classList.remove('show');
+            }, 15000);
+        });
+        
+        // Periodic behavior check
+        setInterval(async () => {
+            try {
+                const metrics = await window.bonsaiAPI.getBehaviorMetrics();
+                const prediction = await window.bonsaiAPI.getBehaviorPrediction();
+                
+                // Update visual indicators based on behavior
+                if (prediction && prediction.needsHelp && prediction.confidence > 0.7) {
+                    if (!statusIndicator.className.includes('proactive')) {
+                        statusIndicator.className = 'status-indicator help-available';
+                    }
+                }
+            } catch (error) {
+                console.log('Behavior check failed:', error);
+            }
+        }, 60000); // Check every minute
     </script>
 </body>
 </html>

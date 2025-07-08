@@ -4,6 +4,8 @@
 const { app, BrowserWindow, screen, ipcMain, globalShortcut, Menu } = require('electron');
 const path = require('path');
 const Store = require('electron-store');
+const BehaviorTracker = require('./behavior-tracker');
+const AdvancedAIService = require('./advanced-ai-service');
 
 // Configuration
 const store = new Store({
@@ -27,10 +29,24 @@ class BonsaiTutorV2 {
     this.floatingWindow = null;
     this.chatWindow = null;
     this.isVisible = false;
+    this.behaviorTracker = null;
+    this.aiService = null;
+    this.proactiveHelpEnabled = true;
+    this.lastProactiveHelp = 0;
   }
 
   async initialize() {
     console.log('🌱 Bonsai SAT Tutor v2: Initializing Glass-inspired assistant...');
+    
+    // Initialize advanced services
+    this.behaviorTracker = new BehaviorTracker(store);
+    this.aiService = new AdvancedAIService(store);
+    
+    // Initialize AI service
+    await this.aiService.initialize();
+    
+    // Setup behavior tracking event listeners
+    this.setupBehaviorTracking();
     
     // Create floating assistant button
     await this.createFloatingAssistant();
@@ -41,7 +57,10 @@ class BonsaiTutorV2 {
     // Setup IPC handlers
     this.setupIPC();
     
-    console.log('✅ Bonsai v2 Ready - Floating assistant active!');
+    // Start behavior tracking
+    await this.behaviorTracker.startTracking();
+    
+    console.log('✅ Bonsai v2 Ready - Advanced AI and behavior tracking active!');
   }
 
   async createFloatingAssistant() {
@@ -147,9 +166,28 @@ class BonsaiTutorV2 {
       }
     });
 
-    // Get AI help
+    // Advanced AI help
     ipcMain.handle('get-ai-help', async (event, data) => {
-      return await this.getAIResponse(data);
+      if (this.behaviorTracker) {
+        this.behaviorTracker.incrementHelpRequests();
+      }
+      return await this.getAdvancedAIResponse(data);
+    });
+
+    // Behavior tracking
+    ipcMain.handle('get-behavior-metrics', () => {
+      return this.behaviorTracker ? this.behaviorTracker.getCurrentMetrics() : {};
+    });
+
+    ipcMain.handle('get-behavior-prediction', async () => {
+      if (!this.aiService) return null;
+      return await this.aiService.getBehavioralPrediction('desktop-user');
+    });
+
+    // Screenshot analysis
+    ipcMain.handle('analyze-screenshot', async (event, screenshot) => {
+      if (!this.aiService) return null;
+      return await this.aiService.analyzeScreenshot(screenshot);
     });
 
     // Settings management
@@ -159,6 +197,12 @@ class BonsaiTutorV2 {
 
     ipcMain.handle('save-settings', (event, settings) => {
       store.set('settings', { ...store.get('settings'), ...settings });
+      
+      // Update proactive help setting
+      if ('proactiveHelp' in settings) {
+        this.proactiveHelpEnabled = settings.proactiveHelp;
+      }
+      
       return true;
     });
 
@@ -187,75 +231,77 @@ class BonsaiTutorV2 {
       store.set('conversation.history', []);
       return true;
     });
+
+    // Advanced features
+    ipcMain.handle('get-session-history', () => {
+      return this.behaviorTracker ? this.behaviorTracker.getSessionHistory() : {};
+    });
+
+    ipcMain.handle('get-ai-service-status', () => {
+      return this.aiService ? this.aiService.getServiceStatus() : {};
+    });
   }
 
-  async getAIResponse(data) {
-    const { question, type = 'help', context = {} } = data;
-    const apiKey = store.get('settings.apiKey');
+  async getAdvancedAIResponse(data) {
+    const { question, type = 'help', context = {}, screenshot } = data;
     
-    if (!apiKey) {
+    if (!this.aiService) {
       return {
         success: false,
-        error: 'Please configure your OpenAI API key in settings'
+        error: 'AI service not initialized'
       };
     }
 
     try {
-      const axios = require('axios');
+      // Get current behavior metrics
+      const behaviorMetrics = this.behaviorTracker ? 
+        this.behaviorTracker.getCurrentMetrics() : {};
       
-      // Create educational prompt based on type
-      let systemPrompt = '';
-      let userPrompt = question;
-
-      switch (type) {
-        case 'hint':
-          systemPrompt = 'You are an encouraging SAT tutor. Provide a helpful hint that guides the student toward the answer without giving it away. Be supportive and educational.';
-          break;
-        case 'explanation':
-          systemPrompt = 'You are a patient SAT teacher. Explain the concept behind this question clearly, using simple examples. Focus on understanding, not just the answer.';
-          break;
-        case 'solution':
-          systemPrompt = 'You are a thorough SAT instructor. Provide a complete step-by-step solution, explaining each step clearly. Teach the method so they can solve similar problems.';
-          break;
-        case 'similar':
-          systemPrompt = 'You are a creative SAT tutor. Generate 2-3 similar practice problems with the same concept but different scenarios. Include brief solutions.';
-          break;
-        default:
-          systemPrompt = 'You are a supportive SAT tutor. Help the student understand this question and guide them toward learning the concept.';
+      // Build conversation context
+      const messages = [];
+      if (context.conversation && context.conversation.length > 0) {
+        messages.push(...context.conversation.slice(-5)); // Last 5 messages
       }
-
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'gpt-4o-mini', // Fast and cost-effective
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      }, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      return {
-        success: true,
-        response: response.data.choices[0].message.content,
-        type: type
+      messages.push({ role: 'user', content: question });
+      
+      // Enhanced context with desktop-specific info
+      const enhancedContext = {
+        ...context,
+        platform: 'desktop',
+        userId: 'desktop-user',
+        sessionId: `session_${Date.now()}`,
+        timestamp: Date.now(),
+        behaviorMetrics
       };
-
+      
+      // Use advanced AI service
+      const response = await this.aiService.advancedChat(
+        messages,
+        type,
+        enhancedContext,
+        screenshot,
+        behaviorMetrics
+      );
+      
+      // Track behavior data
+      if (this.behaviorTracker) {
+        await this.aiService.trackBehavior({
+          userId: 'desktop-user',
+          sessionId: enhancedContext.sessionId,
+          action: 'ai_request',
+          type: type,
+          timestamp: Date.now(),
+          context: enhancedContext
+        });
+      }
+      
+      return response;
+      
     } catch (error) {
-      console.error('AI API Error:', error);
+      console.error('Advanced AI Error:', error);
       return {
         success: false,
-        error: error.response?.data?.error?.message || error.message
+        error: error.message || 'AI service temporarily unavailable'
       };
     }
   }
@@ -278,8 +324,123 @@ class BonsaiTutorV2 {
     }, 500);
   }
 
+  setupBehaviorTracking() {
+    if (!this.behaviorTracker) return;
+    
+    // Listen for struggle detection
+    this.behaviorTracker.on('struggle-detected', (struggle) => {
+      console.log(`😰 Struggle detected: ${struggle.type}`);
+      this.handleStruggleDetection(struggle);
+    });
+    
+    // Listen for question detection
+    this.behaviorTracker.on('question-detected', (questionData) => {
+      console.log('📝 Question detected on screen');
+      this.handleQuestionDetection(questionData);
+    });
+    
+    // Listen for help needed predictions
+    this.behaviorTracker.on('help-needed', (prediction) => {
+      console.log('🆘 Help needed prediction:', prediction.suggestedAction);
+      this.handleHelpNeeded(prediction);
+    });
+  }
+  
+  async handleStruggleDetection(struggle) {
+    if (!this.proactiveHelpEnabled) return;
+    
+    const now = Date.now();
+    const timeSinceLastHelp = now - this.lastProactiveHelp;
+    
+    // Don't be too aggressive with proactive help
+    if (timeSinceLastHelp < 60000) return; // 1 minute cooldown
+    
+    // Show subtle indication in floating button
+    if (this.floatingWindow) {
+      this.floatingWindow.webContents.send('show-struggle-indicator', struggle.type);
+    }
+    
+    // For high intensity struggles, offer immediate help
+    if (struggle.intensity > 0.8) {
+      this.lastProactiveHelp = now;
+      this.offerProactiveHelp('immediate', struggle);
+    }
+  }
+  
+  async handleQuestionDetection(questionData) {
+    if (!this.behaviorTracker) return;
+    
+    // Analyze if user might need help with this question
+    const metrics = this.behaviorTracker.getCurrentMetrics();
+    
+    // If they've been idle or struggling, offer help
+    if (metrics.idleTime > 30000 || metrics.strugglingIndicators.length > 0) {
+      setTimeout(() => {
+        this.offerProactiveHelp('gentle', {
+          type: 'question_detected',
+          questionData
+        });
+      }, 45000); // Wait 45 seconds before offering help
+    }
+  }
+  
+  async handleHelpNeeded(prediction) {
+    if (!this.proactiveHelpEnabled) return;
+    
+    const now = Date.now();
+    const timeSinceLastHelp = now - this.lastProactiveHelp;
+    
+    if (timeSinceLastHelp < prediction.timeUntilIntervention) return;
+    
+    this.lastProactiveHelp = now;
+    
+    switch (prediction.suggestedAction) {
+      case 'immediate_help':
+        this.offerProactiveHelp('immediate', prediction);
+        break;
+      case 'gentle_prompt':
+        this.offerProactiveHelp('gentle', prediction);
+        break;
+      case 'monitor':
+        // Just update the floating button to show availability
+        if (this.floatingWindow) {
+          this.floatingWindow.webContents.send('show-help-available');
+        }
+        break;
+    }
+  }
+  
+  async offerProactiveHelp(urgency, context) {
+    console.log(`🤝 Offering ${urgency} proactive help`);
+    
+    if (urgency === 'immediate') {
+      // Open chat window with proactive message
+      await this.createChatWindow();
+      if (this.chatWindow) {
+        this.chatWindow.webContents.send('show-proactive-help', {
+          urgency,
+          context,
+          message: "I noticed you might be struggling with this problem. Would you like some help? I can provide a hint, explain the concept, or walk through the solution step-by-step."
+        });
+      }
+    } else {
+      // Show subtle notification in floating button
+      if (this.floatingWindow) {
+        this.floatingWindow.webContents.send('show-proactive-offer', {
+          urgency,
+          context
+        });
+      }
+    }
+  }
+  
   cleanup() {
     globalShortcut.unregisterAll();
+    
+    if (this.behaviorTracker) {
+      this.behaviorTracker.stopTracking();
+    }
+    
     if (this.floatingWindow) this.floatingWindow.destroy();
     if (this.chatWindow) this.chatWindow.destroy();
   }
