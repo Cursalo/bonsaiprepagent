@@ -76,19 +76,19 @@
                 console.warn('Marked library not loaded, but continuing...');
             }
             
-            // Load the external module file to avoid CSP issues
+            // Load the Glass-inspired module file to avoid CSP issues
             const script = document.createElement('script');
             script.type = 'module';
-            script.src = chrome.runtime.getURL('src/app/BonsaiSATAppSimple.js');
+            script.src = chrome.runtime.getURL('src/app/BonsaiGlassApp.js');
             
             // Wait for script to load
             await new Promise((resolve, reject) => {
                 script.onload = () => {
-                    console.log('Bonsai SAT: Simple app component loaded');
+                    console.log('Bonsai SAT: Glass component loaded');
                     resolve();
                 };
                 script.onerror = (error) => {
-                    console.error('Bonsai SAT: Failed to load simple app component:', error);
+                    console.error('Bonsai SAT: Failed to load Glass component:', error);
                     reject(error);
                 };
                 document.head.appendChild(script);
@@ -111,205 +111,51 @@
         // Get saved position or use default
         const savedPosition = JSON.parse(localStorage.getItem('bonsai-position') || '{"top": 20, "right": 20}');
         
-        // Create the floating container for Bonsai assistant
+        // Create a minimal container since Glass component handles its own UI
         const container = document.createElement('div');
-        container.id = 'bonsai-sat-container';
+        container.id = 'bonsai-glass-container';
         container.style.cssText = `
             position: fixed;
-            top: ${savedPosition.top}px;
-            right: ${savedPosition.right}px;
-            width: 380px;
-            max-height: 600px;
-            z-index: 999999;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            pointer-events: auto;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transform: translateX(100%);
-            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden;
-            cursor: move;
-        `;
-
-        // Add drag handle
-        const dragHandle = document.createElement('div');
-        dragHandle.className = 'bonsai-drag-handle';
-        dragHandle.style.cssText = `
-            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.05);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: move;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 12px;
-            font-weight: 500;
-            user-select: none;
-            border-radius: 12px 12px 0 0;
-        `;
-        dragHandle.innerHTML = '⋮⋮⋮ Drag to move';
-        
-        container.appendChild(dragHandle);
-
-        // Create the app instance
-        console.log('Bonsai SAT: Creating app element...');
-        const app = document.createElement('bonsai-sat-app');
-        app.id = 'bonsai-sat-app';
-        
-        // Add some basic styling to the app element
-        app.style.cssText = `
-            display: block;
             width: 100%;
             height: 100%;
-            min-height: 200px;
-            color: #e5e5e7;
-            background: transparent;
-            margin-top: 40px;
-            cursor: default;
+            z-index: 999998;
+            pointer-events: none;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         `;
+
+        // Create the Glass app instance
+        console.log('Bonsai SAT: Creating Glass app element...');
+        const app = document.createElement('bonsai-glass-app');
+        app.id = 'bonsai-glass-app';
         
-        // Add fallback content in case the component doesn't load
-        app.innerHTML = `
-            <div style="padding: 20px; text-align: center; color: #e5e5e7;">
-                <div style="margin-bottom: 10px;">🌱</div>
-                <div style="font-weight: 600; margin-bottom: 5px;">Bonsai SAT Prep</div>
-                <div style="font-size: 14px; opacity: 0.7;">Loading assistant...</div>
-                <div style="font-size: 12px; opacity: 0.5; margin-top: 8px;">
-                    If loading fails, try refreshing the page
-                </div>
-            </div>
-        `;
-        
+        // Glass component handles its own styling and positioning
         container.appendChild(app);
         
-        // Check if the custom element loads properly after a delay
+        // Check if the Glass component loads properly after a delay
         setTimeout(() => {
-            if (app.shadowRoot || app.querySelector('.container')) {
-                console.log('Bonsai SAT: Component loaded successfully');
+            if (app.shadowRoot) {
+                console.log('Bonsai SAT: Glass component loaded successfully');
             } else {
-                console.warn('Bonsai SAT: Component may not have loaded properly');
-                // Keep the fallback content visible
+                console.warn('Bonsai SAT: Glass component may not have loaded properly');
             }
         }, 1000);
-        
-        // Add drag functionality
-        setupDragFunctionality(container, dragHandle);
         
         // Add to body with error handling
         try {
             document.body.appendChild(container);
-            console.log('Bonsai SAT: Container added to page');
+            console.log('Bonsai SAT: Glass container added to page');
         } catch (error) {
-            console.error('Bonsai SAT: Failed to add container to page:', error);
+            console.error('Bonsai SAT: Failed to add Glass container to page:', error);
             return null;
         }
 
-        // Show container after a delay
-        setTimeout(() => {
-            container.style.transform = 'translateX(0)';
-            console.log('Bonsai SAT: Container made visible');
-        }, 500);
-
+        console.log('Bonsai SAT: Glass container ready');
         return { container, app };
     }
 
-    function setupDragFunctionality(container, dragHandle) {
-        let isDragging = false;
-        let currentX;
-        let currentY;
-        let initialX;
-        let initialY;
-        let xOffset = 0;
-        let yOffset = 0;
-
-        function dragStart(e) {
-            if (e.type === "touchstart") {
-                initialX = e.touches[0].clientX - xOffset;
-                initialY = e.touches[0].clientY - yOffset;
-            } else {
-                initialX = e.clientX - xOffset;
-                initialY = e.clientY - yOffset;
-            }
-
-            if (e.target === dragHandle || dragHandle.contains(e.target)) {
-                isDragging = true;
-                container.style.transition = 'none';
-            }
-        }
-
-        function dragEnd(e) {
-            if (isDragging) {
-                isDragging = false;
-                container.style.transition = 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
-                
-                // Save position to localStorage
-                const rect = container.getBoundingClientRect();
-                const position = {
-                    top: rect.top,
-                    right: window.innerWidth - rect.right
-                };
-                localStorage.setItem('bonsai-position', JSON.stringify(position));
-            }
-        }
-
-        function drag(e) {
-            if (isDragging) {
-                e.preventDefault();
-                
-                if (e.type === "touchmove") {
-                    currentX = e.touches[0].clientX - initialX;
-                    currentY = e.touches[0].clientY - initialY;
-                } else {
-                    currentX = e.clientX - initialX;
-                    currentY = e.clientY - initialY;
-                }
-
-                xOffset = currentX;
-                yOffset = currentY;
-
-                // Calculate new position
-                const rect = container.getBoundingClientRect();
-                let newTop = rect.top + currentY;
-                let newLeft = rect.left + currentX;
-
-                // Constrain to viewport
-                const maxTop = window.innerHeight - rect.height;
-                const maxLeft = window.innerWidth - rect.width;
-                
-                newTop = Math.max(0, Math.min(newTop, maxTop));
-                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-
-                container.style.top = `${newTop}px`;
-                container.style.left = `${newLeft}px`;
-                container.style.right = 'auto';
-                
-                // Reset offset for next calculation
-                xOffset = 0;
-                yOffset = 0;
-                initialX = e.type === "touchmove" ? e.touches[0].clientX : e.clientX;
-                initialY = e.type === "touchmove" ? e.touches[0].clientY : e.clientY;
-            }
-        }
-
-        // Add event listeners
-        dragHandle.addEventListener("mousedown", dragStart, false);
-        document.addEventListener("mouseup", dragEnd, false);
-        document.addEventListener("mousemove", drag, false);
-
-        // Touch events for mobile
-        dragHandle.addEventListener("touchstart", dragStart, false);
-        document.addEventListener("touchend", dragEnd, false);
-        document.addEventListener("touchmove", drag, false);
-    }
+    // Glass component handles its own drag functionality
 
     function initializePlatformFeatures(platform) {
         switch (platform) {
@@ -444,8 +290,8 @@
             const questionData = extractQuestionData(questionElement, platform);
             
             if (questionData) {
-                // Send to Bonsai app
-                const app = document.getElementById('bonsai-sat-app');
+                // Send to Glass app
+                const app = document.getElementById('bonsai-glass-app');
                 if (app && app.handleQuestionDetected) {
                     app.handleQuestionDetected(questionData);
                 }
@@ -723,26 +569,24 @@
     }
 
     function toggleBonsaiVisibility() {
-        const container = document.getElementById('bonsai-sat-container');
-        if (container) {
-            const isVisible = container.style.transform === 'translateX(0px)' || 
-                            container.style.transform === '';
-            
-            container.style.transform = isVisible ? 'translateX(100%)' : 'translateX(0)';
-            
-            // Notify app about visibility change
-            const app = document.getElementById('bonsai-sat-app');
-            if (app && app.toggleMainView) {
-                app.toggleMainView();
+        const app = document.getElementById('bonsai-glass-app');
+        if (app) {
+            // Glass component handles its own visibility
+            if (app.isExpanded) {
+                app.collapseGlass();
+            } else {
+                app.expandGlass();
             }
         }
     }
 
     function triggerQuickHelp() {
-        const app = document.getElementById('bonsai-sat-app');
+        const app = document.getElementById('bonsai-glass-app');
         if (app) {
-            // Show Bonsai if hidden
-            toggleBonsaiVisibility();
+            // Expand Glass if collapsed
+            if (!app.isExpanded) {
+                app.expandGlass();
+            }
             
             // Get current question and trigger help
             const currentQuestion = getCurrentQuestionData();
@@ -770,9 +614,9 @@
     }
 
     function updateBonsaiSettings(settings) {
-        const app = document.getElementById('bonsai-sat-app');
+        const app = document.getElementById('bonsai-glass-app');
         if (app && settings) {
-            // Update app settings
+            // Update Glass app settings
             Object.keys(settings).forEach(key => {
                 if (app.hasOwnProperty(key)) {
                     app[key] = settings[key];

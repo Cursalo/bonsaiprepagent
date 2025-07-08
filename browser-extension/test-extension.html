@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonsai SAT Extension Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-page {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .question-container {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .question-text {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        .choice {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .choice:hover {
+            background: #e9ecef;
+        }
+        .instructions {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-page">
+        <h1>🌱 Bonsai SAT Extension Test Page</h1>
+        
+        <div class="instructions">
+            <h3>Testing Instructions:</h3>
+            <ol>
+                <li>This page simulates a SAT practice environment like Khan Academy</li>
+                <li>Load the Bonsai extension in your browser</li>
+                <li>The Glass-inspired floating bubble should appear in the top-right corner</li>
+                <li>Click the bubble to expand the Glass interface</li>
+                <li>The extension should detect the questions below and offer help options</li>
+            </ol>
+        </div>
+
+        <!-- Sample SAT Math Question -->
+        <div class="question-container" data-test-id="question-container">
+            <h3>📚 SAT Math Practice Question</h3>
+            <div class="question-text">
+                If f(x) = 3x² - 2x + 1, what is the value of f(2)?
+            </div>
+            <div class="choice">A) 9</div>
+            <div class="choice">B) 11</div>
+            <div class="choice">C) 13</div>
+            <div class="choice">D) 15</div>
+        </div>
+
+        <!-- Sample SAT Reading Question -->
+        <div class="question-container" data-test-id="question-container">
+            <h3>📖 SAT Reading Practice Question</h3>
+            <div class="question-text">
+                Based on the passage, the author's primary purpose is to:
+            </div>
+            <div class="choice">A) Explain a scientific phenomenon</div>
+            <div class="choice">B) Argue for a particular viewpoint</div>
+            <div class="choice">C) Describe historical events</div>
+            <div class="choice">D) Analyze literary techniques</div>
+        </div>
+
+        <!-- Sample SAT Writing Question -->
+        <div class="question-container" data-test-id="question-container">
+            <h3>✏️ SAT Writing Practice Question</h3>
+            <div class="question-text">
+                Which choice provides the most effective transition from the previous sentence?
+            </div>
+            <div class="choice">A) However, this approach has limitations.</div>
+            <div class="choice">B) Furthermore, the results were surprising.</div>
+            <div class="choice">C) Meanwhile, other studies suggest different conclusions.</div>
+            <div class="choice">D) In contrast, the methodology was flawed.</div>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 6px;">
+            <h3>Expected Behavior:</h3>
+            <ul>
+                <li>✅ Glass bubble appears floating in top-right corner</li>
+                <li>✅ Bubble expands to show Glass-inspired interface when clicked</li>
+                <li>✅ Extension detects questions using data-test-id attributes</li>
+                <li>✅ Subject detection works (Math, Reading, Writing)</li>
+                <li>✅ Spiral learning progression system is available</li>
+                <li>✅ Real-time contextual awareness functions</li>
+                <li>✅ AI-powered hints and explanations work (with API key)</li>
+                <li>✅ Component is draggable with Glass aesthetics</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Simulate dynamic question loading (like Khan Academy)
+        setTimeout(() => {
+            console.log('Simulating dynamic content load...');
+            const newQuestion = document.createElement('div');
+            newQuestion.className = 'question-container';
+            newQuestion.setAttribute('data-test-id', 'question-container');
+            newQuestion.innerHTML = `
+                <h3>🧮 SAT Math Practice Question (Dynamically Loaded)</h3>
+                <div class="question-text">
+                    A circle has a radius of 5 units. What is the area of the circle?
+                </div>
+                <div class="choice">A) 10π square units</div>
+                <div class="choice">B) 25π square units</div>
+                <div class="choice">C) 50π square units</div>
+                <div class="choice">D) 100π square units</div>
+            `;
+            document.querySelector('.test-page').appendChild(newQuestion);
+            
+            console.log('New question added - Extension should detect this automatically');
+        }, 3000);
+
+        // Add some console logs to help with debugging
+        console.log('Bonsai SAT Test Page Loaded');
+        console.log('Questions found:', document.querySelectorAll('[data-test-id="question-container"]').length);
+        
+        // Test window.bonsaiSAT API if available
+        setTimeout(() => {
+            if (window.bonsaiSAT) {
+                console.log('Bonsai SAT API available:', window.bonsaiSAT);
+                console.log('Platform detected:', window.bonsaiSAT.platform);
+            } else {
+                console.log('Bonsai SAT extension not loaded or not working');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

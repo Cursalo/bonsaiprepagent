@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonsai SAT Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <span class="emoji">🌱</span>
+                <span class="title">Bonsai SAT Assistant</span>
+            </div>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Ready</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content" id="mainContent">
+            <!-- Dashboard Section -->
+            <div class="section dashboard-section">
+                <h2>📊 Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-value" id="dailyQuestions">0</span>
+                        <span class="stat-label">Questions Today</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="totalSessions">0</span>
+                        <span class="stat-label">Total Sessions</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="streakDays">0</span>
+                        <span class="stat-label">Day Streak</span>
+                    </div>
+                </div>
+                
+                <!-- AI Status -->
+                <div class="ai-status-card">
+                    <h3>🤖 AI Assistant Status</h3>
+                    <div id="aiStatus">❌ No API Key</div>
+                </div>
+                
+                <!-- Practice Questions -->
+                <div class="practice-section">
+                    <h3>📚 Practice Questions</h3>
+                    <div class="practice-controls">
+                        <select id="practiceSubject">
+                            <option value="math">Math</option>
+                            <option value="reading">Reading</option>
+                            <option value="writing">Writing</option>
+                        </select>
+                        <select id="practiceDifficulty">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <button class="generate-btn" id="generateQuestions">📝 Generate 5 Questions</button>
+                    </div>
+                    <div id="practiceQuestionsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Monitoring Section -->
+            <div class="section monitoring-section">
+                <h2>🔍 Bluebook Monitoring</h2>
+                <div class="monitoring-status" id="monitoringStatus">
+                    <div class="status-card">
+                        <span class="status-icon">👁️</span>
+                        <div class="status-info">
+                            <span class="status-title">Monitoring Status</span>
+                            <span class="status-subtitle" id="monitoringText">Stopped</span>
+                        </div>
+                        <button class="toggle-btn" id="toggleMonitoring">Start</button>
+                    </div>
+                    <div class="test-controls">
+                        <button class="test-btn" id="testScreenCapture">📷 Test Screen Capture</button>
+                        <button class="test-btn" id="forceCapture" style="background: #f59e0b;">🎯 Capture Now!</button>
+                        <button class="test-btn" id="showAssistant" style="background: #8b5cf6;">💬 Show Assistant</button>
+                        <small style="color: rgba(255,255,255,0.7); margin-top: 8px; display: block;">
+                            Click "Capture Now!" to manually detect questions on your screen
+                        </small>
+                    </div>
+                    
+                    <div class="permission-help">
+                        <h4>📋 Permission Setup Guide</h4>
+                        <ol style="font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.4;">
+                            <li>Open System Preferences > Privacy & Security</li>
+                            <li>Click "Screen Recording" in the left sidebar</li>
+                            <li>Check the box next to "Bonsai SAT Assistant"</li>
+                            <li>Restart the app to apply permissions</li>
+                        </ol>
+                    </div>
+                </div>
+                
+                <div class="current-question" id="currentQuestion" style="display: none;">
+                    <h3>📝 Current Question</h3>
+                    <div class="question-info">
+                        <span class="question-subject" id="questionSubject">Math</span>
+                        <span class="question-text" id="questionText">No question detected</span>
+                    </div>
+                    <div class="question-actions">
+                        <button class="action-btn primary" id="getHint">💡 Get Hint</button>
+                        <button class="action-btn" id="explainConcept">🧠 Explain Concept</button>
+                        <button class="action-btn" id="showSolution">📝 Solution</button>
+                    </div>
+                </div>
+                
+                <!-- Live Detection Status -->
+                <div class="live-status" id="liveStatus" style="display: none;">
+                    <h4>🔍 Live Detection</h4>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="label">Last Scan:</span>
+                            <span id="lastScanTime">--</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">OCR Text:</span>
+                            <span id="ocrPreview">No text detected</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Detection Status:</span>
+                            <span id="detectionStatus">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="section settings-section" id="settingsSection" style="display: none;">
+                <h2>⚙️ Settings</h2>
+                
+                <div class="setting-group">
+                    <label for="apiKey">OpenAI API Key</label>
+                    <input type="password" id="apiKey" placeholder="sk-proj-...">
+                    <button class="test-btn" id="testApiKey">Test Connection</button>
+                    <small style="color: rgba(255,255,255,0.7); margin-top: 8px; display: block;">
+                        Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank" style="color: #22c55e;">OpenAI Platform</a>
+                    </small>
+                </div>
+                
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="autoDetect" checked>
+                        Auto-detect Questions
+                    </label>
+                </div>
+                
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="soundEnabled">
+                        Sound Notifications
+                    </label>
+                </div>
+                
+                <div class="setting-group">
+                    <label>
+                        <input type="checkbox" id="analyticsEnabled" checked>
+                        Send Analytics
+                    </label>
+                </div>
+                
+                <button class="save-btn" id="saveSettings">💾 Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-btn active" data-section="dashboard">📊 Dashboard</button>
+            <button class="nav-btn" data-section="monitoring">🔍 Monitor</button>
+            <button class="nav-btn" data-section="settings">⚙️ Settings</button>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="links">
+                <a href="#" id="openDashboard">🌐 Web Dashboard</a>
+                <a href="#" id="openHelp">❓ Help</a>
+            </div>
+            <div class="version">v1.0.0</div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

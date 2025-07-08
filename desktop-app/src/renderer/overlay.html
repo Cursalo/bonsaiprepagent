@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bonsai SAT Assistant - Overlay</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            color: #333;
+            overflow: hidden;
+        }
+
+        .overlay-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .overlay-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: rgba(255, 59, 48, 0.1);
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-info {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+        }
+
+        .question-subject {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .question-preview {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #333;
+        }
+
+        .help-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .help-btn {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .help-btn:hover {
+            background: rgba(52, 199, 89, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .help-btn.primary {
+            background: #34c759;
+            color: white;
+        }
+
+        .help-btn.primary:hover {
+            background: #2db653;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay-header">
+        <div class="overlay-title">
+            <span>🌱</span>
+            <span>Bonsai Assistant</span>
+        </div>
+        <button class="close-btn" onclick="window.electronAPI.hideOverlay()">&times;</button>
+    </div>
+
+    <div id="contentArea">
+        <div class="status-message">
+            <div style="text-align: center;">
+                <h3 style="margin-bottom: 12px; color: #22c55e;">🌱 SAT Assistant Ready</h3>
+                <p style="margin-bottom: 16px; font-size: 13px; color: rgba(255, 255, 255, 0.8);">
+                    Waiting for question detection or paste your question below
+                </p>
+            </div>
+            
+            <div class="manual-input-section" style="margin-top: 20px;">
+                <textarea id="manualQuestionInput" placeholder="Can't detect automatically? Paste your SAT question here..." 
+                    style="width: 100%; min-height: 80px; background: rgba(255, 255, 255, 0.05); 
+                    border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; 
+                    padding: 12px; color: white; font-size: 13px; resize: vertical;"></textarea>
+                
+                <button onclick="processManualQuestion()" style="width: 100%; margin-top: 8px; 
+                    background: linear-gradient(135deg, #22c55e, #16a34a); color: white; 
+                    border: none; padding: 10px; border-radius: 8px; font-weight: 500; 
+                    cursor: pointer; transition: all 0.3s ease;">
+                    🤖 Get AI Help
+                </button>
+            </div>
+            
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                <small style="display: block; text-align: center; color: rgba(255, 255, 255, 0.6); font-size: 11px;">
+                    💡 Tip: Use Cmd+Shift+B to toggle this window
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🌱 Bonsai Overlay loaded - REAL MODE');
+        
+        let currentQuestion = null;
+        
+        // Process manually entered questions
+        function processManualQuestion() {
+            const input = document.getElementById('manualQuestionInput');
+            const questionText = input.value.trim();
+            
+            if (!questionText) {
+                alert('Please enter a question first!');
+                return;
+            }
+            
+            console.log('📝 Processing manual question:', questionText);
+            
+            // Create question data from manual input
+            const manualQuestionData = {
+                text: questionText,
+                subject: detectSubject(questionText),
+                isQuestion: true,
+                manualInput: true,
+                timestamp: Date.now(),
+                source: 'manual'
+            };
+            
+            currentQuestion = manualQuestionData;
+            showQuestion(manualQuestionData);
+        }
+        
+        // Detect subject from question text
+        function detectSubject(text) {
+            const lowerText = text.toLowerCase();
+            
+            if (/equation|solve|calculate|function|graph|triangle|circle|angle|polynomial/.test(lowerText)) {
+                return 'math';
+            } else if (/passage|author|paragraph|according|suggests|implies|tone|theme/.test(lowerText)) {
+                return 'reading';
+            } else if (/grammar|sentence|punctuation|comma|semicolon|revision|edit/.test(lowerText)) {
+                return 'writing';
+            }
+            
+            return 'general';
+        }
+        
+        // Listen for real question detection from main process
+        window.electronAPI.onQuestionDetected((event, questionData) => {
+            console.log('📝 Real question detected in overlay:', questionData);
+            currentQuestion = questionData;
+            showQuestion(questionData);
+        });
+        
+        // Listen for quick help trigger
+        window.electronAPI.onTriggerQuickHelp(() => {
+            if (currentQuestion) {
+                getHelp('hint');
+            }
+        });
+
+        function showQuestion(question) {
+            const contentArea = document.getElementById('contentArea');
+            
+            // Determine if this is a Bluebook interface screen or actual question
+            const isBluebookInterface = /section\s+\d+.*math/i.test(question.text) ||
+                                       /this\s+is\s+a\s+test\s+preview/i.test(question.text) ||
+                                       /check\s+your\s+work/i.test(question.text);
+            
+            if (isBluebookInterface) {
+                // Show educational dashboard for section screens
+                contentArea.innerHTML = `
+                    <div class="whiteboard-header">
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <span style="font-size: 24px;">📚</span>
+                            <div>
+                                <h3 style="margin: 0; color: #1e40af;">SAT ${question.subject.toUpperCase()} Section</h3>
+                                <p style="margin: 0; font-size: 12px; color: #64748b;">AI Tutor Ready to Help</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="study-dashboard">
+                        <div class="strategy-card">
+                            <h4>📊 Section Strategy</h4>
+                            <p>• Take your time on each question</p>
+                            <p>• Look for key mathematical relationships</p>
+                            <p>• Eliminate obviously wrong answers first</p>
+                            <p>• Use process of elimination</p>
+                        </div>
+                        
+                        <div class="quick-actions">
+                            <button class="help-btn primary" onclick="getHelp('strategy')">
+                                🎯 Section Tips
+                            </button>
+                            <button class="help-btn" onclick="getHelp('formulas')">
+                                📐 Key Formulas
+                            </button>
+                            <button class="help-btn" onclick="getHelp('practice')">
+                                💪 Practice Mode
+                            </button>
+                        </div>
+                        
+                        <div class="tutor-message">
+                            <div style="background: rgba(34, 197, 94, 0.1); padding: 12px; border-radius: 8px; border-left: 3px solid #22c55e;">
+                                <p style="margin: 0; font-style: italic; color: #16a34a;">
+                                    "Click on any question to get personalized help, hints, and step-by-step solutions. I'm here to guide you through each problem!"
+                                </p>
+                                <span style="font-size: 12px; color: #22c55e; font-weight: 500;">— Your AI Math Tutor</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Show question-specific help interface
+                contentArea.innerHTML = `
+                    <div class="question-whiteboard">
+                        <div class="question-header">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <span class="question-subject">${question.subject.toUpperCase()} QUESTION</span>
+                                <span style="background: #3b82f6; color: white; padding: 4px 8px; border-radius: 12px; font-size: 11px;">DETECTED</span>
+                            </div>
+                        </div>
+                        
+                        <div class="question-preview-card">
+                            <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 12px 0;">
+                                <div style="font-size: 13px; line-height: 1.5; color: #334155;">
+                                    ${question.text.substring(0, 200)}${question.text.length > 200 ? '...' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="tutor-actions">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+                                <button class="help-btn primary" onclick="getHelp('hint')">
+                                    💡 Get Hint
+                                </button>
+                                <button class="help-btn" onclick="getHelp('concept')">
+                                    🧠 Explain
+                                </button>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <button class="help-btn" onclick="getHelp('solution')">
+                                    📝 Solution
+                                </button>
+                                <button class="help-btn" onclick="getHelp('similar')">
+                                    🔄 Similar Problems
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="learning-reminder">
+                            <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 6px; padding: 10px; margin-top: 12px;">
+                                <p style="margin: 0; font-size: 12px; color: #3b82f6; text-align: center;">
+                                    📖 Learning Mode Active - Focus on understanding, not just answers!
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function getHelp(type) {
+            if (!currentQuestion) {
+                alert('No question detected yet. Please ensure Bluebook is running.');
+                return;
+            }
+            
+            console.log(`🤖 Getting ${type} help for real question`);
+            
+            const helpButton = document.querySelector(`[onclick="getHelp('${type}')"]`);
+            const originalText = helpButton.textContent;
+            helpButton.textContent = '🤖 Thinking...';
+            helpButton.disabled = true;
+            
+            try {
+                // Handle special help types for educational interface
+                let questionText = currentQuestion.text;
+                let helpType = type;
+                
+                if (type === 'strategy') {
+                    questionText = `Provide SAT ${currentQuestion.subject} section strategy and tips`;
+                    helpType = 'concept';
+                } else if (type === 'formulas') {
+                    questionText = `List key formulas for SAT ${currentQuestion.subject} section`;
+                    helpType = 'concept';
+                } else if (type === 'practice') {
+                    questionText = `Generate similar practice questions for SAT ${currentQuestion.subject}`;
+                    helpType = 'concept';
+                } else if (type === 'similar') {
+                    questionText = `Generate similar practice problems to: ${currentQuestion.text}`;
+                    helpType = 'concept';
+                }
+                
+                const response = await window.electronAPI.getAIHelp({
+                    questionText: questionText,
+                    helpType: helpType,
+                    questionData: currentQuestion
+                });
+                
+                if (response.success) {
+                    const content = response.analysis || response.hint || response.explanation || response.solution || response.message;
+                    showAIResponse(type, content);
+                } else {
+                    alert(`Error getting help: ${response.error}`);
+                }
+            } catch (error) {
+                console.error('Help request failed:', error);
+                alert('Failed to get AI help. Please check your API key.');
+            } finally {
+                helpButton.textContent = originalText;
+                helpButton.disabled = false;
+            }
+        }
+        
+        function showAIResponse(helpType, message) {
+            const icons = {
+                hint: '💡',
+                concept: '🧠',
+                solution: '📝',
+                strategy: '🎯',
+                formulas: '📐',
+                practice: '💪',
+                similar: '🔄'
+            };
+            
+            const titles = {
+                hint: 'Hint',
+                concept: 'Concept Explanation',
+                solution: 'Step-by-Step Solution',
+                strategy: 'Section Strategy',
+                formulas: 'Key Formulas',
+                practice: 'Practice Mode',
+                similar: 'Similar Problems'
+            };
+            
+            // Create response overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    max-width: 90%;
+                    max-height: 80%;
+                    overflow-y: auto;
+                ">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <h3 style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                            ${icons[helpType]} ${titles[helpType] || helpType.charAt(0).toUpperCase() + helpType.slice(1)}
+                        </h3>
+                        <button onclick="this.closest('.overlay-response').remove()" style="
+                            background: #ff3b30;
+                            color: white;
+                            border: none;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            cursor: pointer;
+                        ">×</button>
+                    </div>
+                    <div style="
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 16px;
+                        line-height: 1.5;
+                        white-space: pre-wrap;
+                    ">${message}</div>
+                    <button onclick="this.closest('.overlay-response').remove()" style="
+                        background: #34c759;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 6px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        margin-top: 16px;
+                        width: 100%;
+                    ">Close</button>
+                </div>
+            `;
+            
+            overlay.className = 'overlay-response';
+            document.body.appendChild(overlay);
+        }
+    </script>
+</body>
+</html>

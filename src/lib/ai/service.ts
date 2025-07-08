@@ -3,6 +3,11 @@ import { OpenAIService, type ChatMessage, type AIResponse } from './openai';
 import { createClient } from '@supabase/supabase-js';
 // import { StripeService } from '@/lib/stripe/service'; // Temporarily disabled
 
+// Import advanced AI components
+import { AdvancedQuestionAnalyzer, QuestionInput, QuestionAnalysis, StudentState } from './advanced-question-analyzer';
+import { ResponseOptimizer, OptimizedResponse, ResponseContext } from './response-optimizer';
+import { BehaviorAnalytics, BehaviorPattern } from '@/lib/behavior/analytics';
+
 const adminSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -32,11 +37,170 @@ export interface BonsaiAIResponse extends AIResponse {
     daily: number;
     unlimited: boolean;
   };
+  // Enhanced response data
+  optimizedResponse?: OptimizedResponse;
+  questionAnalysis?: QuestionAnalysis;
+  adaptationReason?: string;
+  behaviorPrediction?: any;
 }
 
 export class BonsaiAIService {
+  // Static instances of advanced AI components
+  private static questionAnalyzer = new AdvancedQuestionAnalyzer();
+  private static responseOptimizer = new ResponseOptimizer();
+  private static behaviorAnalytics = new BehaviorAnalytics();
+
   /**
-   * Main entry point for Bonsai AI interactions
+   * Revolutionary AI chat with advanced question analysis and response optimization
+   */
+  static async advancedChat(
+    messages: ChatMessage[],
+    assistanceType: AIResponse['assistanceType'],
+    context: AIInteractionContext,
+    screenshot?: string,
+    behaviorMetrics?: any
+  ): Promise<BonsaiAIResponse> {
+    try {
+      // 1. Check user permissions and usage limits
+      await this.checkUserPermissions(context.userId, assistanceType);
+
+      // 2. Advanced question analysis if screenshot provided
+      let questionAnalysis: QuestionAnalysis | undefined;
+      let studentState: StudentState | undefined;
+
+      if (screenshot || context.screenContext) {
+        const questionInput: QuestionInput = {
+          screenshot: screenshot,
+          platform: (context.detectedPlatform as any) || 'other',
+          userId: context.userId,
+          behaviorMetrics: behaviorMetrics || {
+            timeOnQuestion: 60,
+            mouseMovements: 10,
+            keystrokes: 5,
+            scrolls: 2,
+            previousAttempts: 1,
+            frustrationLevel: 0.3
+          },
+          questionContext: context.screenContext
+        };
+
+        questionAnalysis = await this.questionAnalyzer.analyzeQuestion(questionInput);
+        studentState = await this.questionAnalyzer.getStudentState(context.userId);
+        
+        // Update context with analysis results
+        context.subject = questionAnalysis.subject;
+        context.difficulty = questionAnalysis.difficulty;
+        context.questionType = questionAnalysis.questionType;
+      }
+
+      // 3. Get user's Bonsai state for personalization
+      const bonsaiState = await this.getBonsaiState(context.userId);
+      context.userLevel = this.calculateUserLevel(bonsaiState);
+      context.previousInteractions = await this.getPreviousInteractionsCount(context.userId);
+
+      // 4. Generate optimized response if we have analysis
+      let optimizedResponse: OptimizedResponse | undefined;
+      if (questionAnalysis && studentState) {
+        const responseContext: ResponseContext = {
+          questionAnalysis,
+          studentState,
+          behaviorMetrics: behaviorMetrics || {
+            timeOnQuestion: 60,
+            attemptsCount: 1,
+            frustrationLevel: 0.3,
+            confidenceLevel: 0.6,
+            attentionLevel: 0.7
+          },
+          requestType: assistanceType as any,
+          urgency: this.calculateUrgency(behaviorMetrics)
+        };
+
+        optimizedResponse = await this.responseOptimizer.generateOptimalResponse(responseContext);
+      }
+
+      // 5. Select optimal AI provider
+      const provider = await this.selectProvider(context, assistanceType);
+
+      // 6. Generate AI response (use optimized if available)
+      let aiResponse: AIResponse;
+      if (optimizedResponse) {
+        aiResponse = {
+          content: optimizedResponse.content,
+          assistanceType: assistanceType,
+          confidence: optimizedResponse.confidence,
+          responseTimeMs: 1500, // Estimated for optimized response
+          tokensUsed: 0, // Would track actual tokens
+          spiralQuestions: optimizedResponse.interactiveElements?.filter(e => e.type === 'practice_problem').map(e => ({
+            question: e.content,
+            type: 'practice',
+            difficulty: 'same',
+            expectedAnswer: e.expectedResponse,
+            explanation: 'Generated practice question'
+          }))
+        };
+      } else {
+        aiResponse = await this.generateAIResponse(provider, messages, assistanceType, context);
+      }
+
+      // 7. Behavioral prediction for proactive assistance
+      let behaviorPrediction;
+      if (behaviorMetrics) {
+        behaviorPrediction = await this.behaviorAnalytics.predictStudentNeeds(context.userId);
+      }
+
+      // 8. Calculate experience gain and level progression
+      const experienceGained = this.calculateExperienceGain(
+        assistanceType,
+        aiResponse.confidence,
+        context.difficulty || 'medium'
+      );
+
+      const levelUpOccurred = await this.updateBonsaiProgress(
+        context.userId,
+        experienceGained
+      );
+
+      // 9. Log interaction in database
+      const interactionId = await this.logInteraction(
+        context,
+        messages[messages.length - 1],
+        aiResponse,
+        provider,
+        experienceGained,
+        levelUpOccurred
+      );
+
+      // 10. Save spiral questions if generated
+      if (aiResponse.spiralQuestions?.length) {
+        await this.saveSpiralQuestions(interactionId, aiResponse.spiralQuestions);
+      }
+
+      // 11. Update usage tracking
+      await this.updateUsageTracking(context.userId);
+
+      // 12. Get remaining usage for response
+      const usageRemaining = await this.getRemainingUsage(context.userId);
+
+      return {
+        ...aiResponse,
+        provider,
+        experienceGained,
+        levelUpOccurred,
+        usageRemaining,
+        optimizedResponse,
+        questionAnalysis,
+        adaptationReason: optimizedResponse?.adaptationReason,
+        behaviorPrediction
+      };
+    } catch (error) {
+      console.error('Advanced Bonsai AI Service error:', error);
+      // Fallback to standard chat
+      return this.chat(messages, assistanceType, context);
+    }
+  }
+
+  /**
+   * Main entry point for Bonsai AI interactions (legacy method)
    */
   static async chat(
     messages: ChatMessage[],
@@ -505,5 +669,115 @@ export class BonsaiAIService {
     // This would integrate with browser's speech recognition or a service like Whisper
     // For now, return a placeholder
     throw new Error('Voice processing not yet implemented');
+  }
+
+  /**
+   * Calculate urgency level based on behavior metrics
+   */
+  private static calculateUrgency(behaviorMetrics: any): 'low' | 'medium' | 'high' {
+    if (!behaviorMetrics) return 'medium';
+
+    const frustration = behaviorMetrics.frustrationLevel || 0;
+    const timeOnQuestion = behaviorMetrics.timeOnQuestion || 0;
+
+    if (frustration > 0.7 || timeOnQuestion > 300) return 'high';
+    if (frustration > 0.4 || timeOnQuestion > 120) return 'medium';
+    return 'low';
+  }
+
+  /**
+   * Analyze screen context for question detection
+   */
+  static async analyzeScreenContext(
+    screenshot: string,
+    userId: string,
+    platform?: string
+  ): Promise<QuestionAnalysis | null> {
+    try {
+      const questionInput: QuestionInput = {
+        screenshot,
+        platform: (platform as any) || 'other',
+        userId,
+        behaviorMetrics: {
+          timeOnQuestion: 0,
+          mouseMovements: 0,
+          keystrokes: 0,
+          scrolls: 0,
+          previousAttempts: 0,
+          frustrationLevel: 0
+        }
+      };
+
+      return await this.questionAnalyzer.analyzeQuestion(questionInput);
+    } catch (error) {
+      console.error('Screen context analysis failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get behavioral predictions for a user
+   */
+  static async getBehavioralPrediction(userId: string): Promise<any> {
+    try {
+      return await this.behaviorAnalytics.predictStudentNeeds(userId);
+    } catch (error) {
+      console.error('Behavioral prediction failed:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Track user behavior pattern
+   */
+  static async trackBehavior(pattern: BehaviorPattern): Promise<void> {
+    try {
+      await this.behaviorAnalytics.trackBehavior(pattern);
+    } catch (error) {
+      console.error('Behavior tracking failed:', error);
+    }
+  }
+
+  /**
+   * Get student knowledge state
+   */
+  static async getStudentKnowledgeState(userId: string): Promise<StudentState | null> {
+    try {
+      return await this.questionAnalyzer.getStudentState(userId);
+    } catch (error) {
+      console.error('Failed to get student state:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate multiple response options for comparison
+   */
+  static async generateResponseOptions(
+    messages: ChatMessage[],
+    context: AIInteractionContext,
+    screenshot?: string,
+    behaviorMetrics?: any,
+    count: number = 3
+  ): Promise<BonsaiAIResponse[]> {
+    const responses: BonsaiAIResponse[] = [];
+    const assistanceTypes: AIResponse['assistanceType'][] = ['hint', 'explanation', 'spiral_question'];
+
+    for (let i = 0; i < Math.min(count, assistanceTypes.length); i++) {
+      try {
+        const response = await this.advancedChat(
+          messages,
+          assistanceTypes[i],
+          context,
+          screenshot,
+          behaviorMetrics
+        );
+        responses.push(response);
+      } catch (error) {
+        console.error(`Failed to generate response option ${i}:`, error);
+      }
+    }
+
+    return responses;
   }
 }

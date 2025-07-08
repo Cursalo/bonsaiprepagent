@@ -1,0 +1,57 @@
+{
+  "name": "bonsai-sat-tutor-v2",
+  "version": "2.0.0",
+  "description": "Glass-inspired SAT Tutor - Always Available AI Assistant",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-mac": "electron-builder --mac",
+    "build-all": "electron-builder --mac --win --linux"
+  },
+  "build": {
+    "appId": "com.bonsai.sat-tutor-v2",
+    "productName": "Bonsai SAT Tutor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "node_modules/**/*"
+    ],
+    "mac": {
+      "icon": "assets/icon.png",
+      "category": "public.app-category.education",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "dmg": {
+      "title": "Bonsai SAT Tutor v2",
+      "icon": "assets/icon.png"
+    }
+  },
+  "keywords": [
+    "SAT",
+    "education",
+    "AI",
+    "tutor",
+    "desktop",
+    "assistant"
+  ],
+  "author": "Bonsai SAT Prep",
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^8.1.0",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "electron": "^27.3.11",
+    "electron-builder": "^24.13.3"
+  }
+}

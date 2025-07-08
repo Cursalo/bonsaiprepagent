@@ -40,4 +40,13 @@ next-env.d.ts
 *.swo
 
 # OS
-Thumbs.db.env.production
+Thumbs.db
+
+# Desktop app distributions (large files)
+desktop-app/dist/
+desktop-app-v2/dist/
+desktop-app/*.dmg
+desktop-app-v2/*.dmg
+
+# Environment files
+.env.production

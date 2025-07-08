@@ -10,6 +10,13 @@ async function initializePopup() {
   try {
     // Get current tab info
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    // Check if user is on a supported SAT site
+    if (tab && isSupportedSATSite(tab.url)) {
+      showGlassRedirectMessage(tab);
+      return;
+    }
+    
     updateSiteStatus(tab);
     
     // Load extension settings
@@ -244,9 +251,8 @@ async function incrementUsageCount() {
 
 // Open settings page
 function openSettings() {
-  chrome.tabs.create({
-    url: 'https://bonsaiprepagent.vercel.app/dashboard'
-  });
+  // Open the local options page instead of web dashboard
+  chrome.runtime.openOptionsPage();
   window.close();
 }
 

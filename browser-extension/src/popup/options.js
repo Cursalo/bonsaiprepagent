@@ -1,158 +1,170 @@
-// Bonsai SAT Prep - Extension Options/Settings
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('settingsForm');
-    const openaiKeyInput = document.getElementById('openaiKey');
-    const saveButton = document.getElementById('saveButton');
-    const statusDiv = document.getElementById('status');
-    
+// Bonsai SAT Extension - Options Page
+// Handles API key configuration and settings
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const apiKeyInput = document.getElementById('apiKey');
+    const saveBtn = document.getElementById('saveBtn');
+    const testBtn = document.getElementById('testBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const settingsForm = document.getElementById('settingsForm');
+
     // Load existing settings
-    loadSettings();
-    
-    // Handle form submission
-    form.addEventListener('submit', handleSave);
-    
+    await loadSettings();
+
+    // Event listeners
+    settingsForm.addEventListener('submit', handleSave);
+    testBtn.addEventListener('click', handleTest);
+    apiKeyInput.addEventListener('input', clearStatus);
+
     async function loadSettings() {
         try {
             const result = await chrome.storage.sync.get(['openai_api_key']);
             if (result.openai_api_key) {
-                // Show masked key for security
-                openaiKeyInput.value = '••••••••••••••••••••' + result.openai_api_key.slice(-8);
-                openaiKeyInput.setAttribute('data-has-key', 'true');
+                apiKeyInput.value = result.openai_api_key;
+                showStatus('Settings loaded successfully', 'success');
             }
         } catch (error) {
             console.error('Failed to load settings:', error);
-            showStatus('Failed to load settings', 'error');
+            showStatus('Failed to load existing settings', 'error');
         }
     }
-    
+
     async function handleSave(event) {
         event.preventDefault();
         
-        const openaiKey = openaiKeyInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
         
-        if (!openaiKey) {
-            showStatus('Please enter your OpenAI API key', 'error');
+        if (!apiKey) {
+            showStatus('Please enter an API key', 'error');
+            apiKeyInput.focus();
             return;
         }
-        
-        // Skip saving if the input shows the masked value
-        if (openaiKeyInput.getAttribute('data-has-key') === 'true' && openaiKey.startsWith('••••')) {
-            showStatus('Settings saved successfully!', 'success');
+
+        if (!apiKey.startsWith('sk-')) {
+            showStatus('Invalid API key format. OpenAI keys start with "sk-"', 'error');
+            apiKeyInput.focus();
             return;
         }
-        
-        // Validate API key format
-        if (!openaiKey.startsWith('sk-')) {
-            showStatus('Invalid API key format. Should start with "sk-"', 'error');
-            return;
-        }
-        
-        saveButton.disabled = true;
-        saveButton.textContent = 'Saving...';
-        
+
         try {
-            // Save to Chrome storage
+            saveBtn.disabled = true;
+            saveBtn.textContent = '💾 Saving...';
+
             await chrome.storage.sync.set({
-                openai_api_key: openaiKey
+                openai_api_key: apiKey
             });
+
+            showStatus('✅ Settings saved successfully! You can now use AI features.', 'success');
             
-            // Test the API key
-            const isValid = await testApiKey(openaiKey);
-            
-            if (isValid) {
-                showStatus('Settings saved successfully!', 'success');
-                
-                // Mask the key in the input
-                openaiKeyInput.value = '••••••••••••••••••••' + openaiKey.slice(-8);
-                openaiKeyInput.setAttribute('data-has-key', 'true');
-                
-                // Notify content scripts about the update
-                notifyContentScripts();
-            } else {
-                showStatus('API key appears to be invalid. Please check and try again.', 'error');
-            }
-            
+            // Reset button
+            setTimeout(() => {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 Save Settings';
+            }, 1000);
+
         } catch (error) {
             console.error('Failed to save settings:', error);
-            showStatus('Failed to save settings', 'error');
-        } finally {
-            saveButton.disabled = false;
-            saveButton.textContent = 'Save Settings';
+            showStatus('Failed to save settings. Please try again.', 'error');
+            
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Save Settings';
         }
     }
-    
-    async function testApiKey(apiKey) {
+
+    async function handleTest() {
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!apiKey) {
+            showStatus('Please enter an API key first', 'error');
+            apiKeyInput.focus();
+            return;
+        }
+
         try {
+            testBtn.disabled = true;
+            testBtn.textContent = '🧪 Testing...';
+            
+            showStatus('Testing API connection...', 'success');
+
+            // Test API call to OpenAI
             const response = await fetch('https://api.openai.com/v1/models', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${apiKey}`
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
                 }
             });
-            
-            return response.ok;
+
+            if (response.ok) {
+                showStatus('✅ API key is valid and working!', 'success');
+            } else {
+                const errorData = await response.json();
+                showStatus(`❌ API test failed: ${errorData.error?.message || 'Invalid API key'}`, 'error');
+            }
+
         } catch (error) {
-            console.error('API key test failed:', error);
-            return false;
+            console.error('API test failed:', error);
+            showStatus('❌ API test failed: Network error or invalid key', 'error');
+        } finally {
+            testBtn.disabled = false;
+            testBtn.textContent = '🧪 Test Connection';
         }
     }
-    
+
     function showStatus(message, type) {
-        statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;
-        statusDiv.style.display = 'block';
+        statusMessage.textContent = message;
+        statusMessage.className = `status-message ${type}`;
+        statusMessage.style.display = 'block';
         
-        // Hide after 3 seconds for success messages
+        // Auto-hide success messages after 3 seconds
         if (type === 'success') {
             setTimeout(() => {
-                statusDiv.style.display = 'none';
+                statusMessage.style.display = 'none';
             }, 3000);
         }
     }
-    
-    async function notifyContentScripts() {
-        try {
-            // Get all tabs
-            const tabs = await chrome.tabs.query({});
-            
-            // Notify each content script
-            for (const tab of tabs) {
-                try {
-                    await chrome.tabs.sendMessage(tab.id, {
-                        action: 'settingsUpdated'
-                    });
-                } catch (error) {
-                    // Tab might not have content script, ignore
-                }
-            }
-        } catch (error) {
-            console.error('Failed to notify content scripts:', error);
-        }
+
+    function clearStatus() {
+        statusMessage.style.display = 'none';
     }
-    
-    // Handle input focus to allow editing
-    openaiKeyInput.addEventListener('focus', function() {
-        if (this.getAttribute('data-has-key') === 'true') {
-            this.value = '';
-            this.setAttribute('data-has-key', 'false');
-            this.placeholder = 'Enter new API key...';
+
+    // Handle keyboard shortcuts
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' && event.target === apiKeyInput) {
+            handleSave(event);
         }
     });
+
+    // Show API key visibility toggle
+    const toggleVisibility = document.createElement('button');
+    toggleVisibility.type = 'button';
+    toggleVisibility.textContent = '👁️';
+    toggleVisibility.style.cssText = `
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        font-size: 16px;
+        padding: 4px;
+    `;
     
-    // Handle input blur to restore masked value if empty
-    openaiKeyInput.addEventListener('blur', async function() {
-        if (!this.value.trim() && this.getAttribute('data-has-key') === 'false') {
-            // Restore the masked value
-            try {
-                const result = await chrome.storage.sync.get(['openai_api_key']);
-                if (result.openai_api_key) {
-                    this.value = '••••••••••••••••••••' + result.openai_api_key.slice(-8);
-                    this.setAttribute('data-has-key', 'true');
-                    this.placeholder = 'sk-...';
-                }
-            } catch (error) {
-                console.error('Failed to restore masked value:', error);
-            }
+    const inputContainer = apiKeyInput.parentElement;
+    inputContainer.style.position = 'relative';
+    inputContainer.appendChild(toggleVisibility);
+    
+    toggleVisibility.addEventListener('click', () => {
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            toggleVisibility.textContent = '🙈';
+        } else {
+            apiKeyInput.type = 'password';
+            toggleVisibility.textContent = '👁️';
         }
     });
+
+    console.log('Bonsai SAT: Options page loaded');
 });
